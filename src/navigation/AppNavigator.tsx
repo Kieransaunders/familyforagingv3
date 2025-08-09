@@ -142,6 +142,14 @@ function MyFindsStack() {
           presentation: 'modal',
         }} 
       />
+      <Stack.Screen 
+        name="LogFind" 
+        component={LogFindScreen} 
+        options={({ route }) => ({ 
+          title: route.params?.editFind ? 'Edit Find' : 'Log Find',
+          presentation: 'modal',
+        })} 
+      />
     </Stack.Navigator>
   );
 }

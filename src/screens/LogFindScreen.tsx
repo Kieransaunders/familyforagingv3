@@ -14,22 +14,35 @@ interface LogFindScreenProps {
 }
 
 export default function LogFindScreen({ navigation, route }: LogFindScreenProps) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<ForagingFind['category']>('plant');
-  const [notes, setNotes] = useState('');
-  const [habitat, setHabitat] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
+  const editFind = route?.params?.editFind;
+  const isEditMode = !!editFind;
+  
+  const [name, setName] = useState(editFind?.name || '');
+  const [category, setCategory] = useState<ForagingFind['category']>(editFind?.category || 'plant');
+  const [notes, setNotes] = useState(editFind?.notes || '');
+  const [habitat, setHabitat] = useState(editFind?.habitat || '');
+  const [isPrivate, setIsPrivate] = useState(editFind?.isPrivate || false);
+  const [photos, setPhotos] = useState<string[]>(editFind?.photos || []);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
-  const { addFind, currentLocation, presetLogLocation, setPresetLogLocation } = useForagingStore();
+  const { addFind, updateFind, currentLocation, presetLogLocation, setPresetLogLocation } = useForagingStore();
   const seasonalSuggestions = getCurrentSeasonSuggestions();
   const manualMode = route?.params?.manualMode;
 
   useEffect(() => {
-    if (presetLogLocation) {
+    if (isEditMode && editFind) {
+      // Edit mode - use existing find's location
+      const existingLocation = {
+        coords: {
+          latitude: editFind.location.latitude,
+          longitude: editFind.location.longitude,
+        },
+      };
+      setLocation(existingLocation as Location.LocationObject);
+      setAddress(editFind.location.address || 'Unknown address');
+    } else if (presetLogLocation) {
       // Use preset location from map pin
       const mockLocation = {
         coords: {
@@ -52,7 +65,7 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
     } else {
       getCurrentLocation();
     }
-  }, [presetLogLocation, manualMode]);
+  }, [presetLogLocation, manualMode, isEditMode, editFind]);
 
   const getCurrentLocation = async () => {
     try {
@@ -110,7 +123,7 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
       return;
     }
 
-    if (!location && !presetLogLocation && !manualMode) {
+    if (!isEditMode && !location && !presetLogLocation && !manualMode) {
       Alert.alert('Error', 'Location is required. Please enable location services or use manual entry.');
       return;
     }
@@ -120,48 +133,76 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
       longitude: location?.coords.longitude || 0,
     };
 
-    const find: ForagingFind = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      category,
-      location: {
-        latitude: findLocation.latitude,
-        longitude: findLocation.longitude,
-        address: address || undefined,
-      },
-      photos,
-      notes: notes.trim(),
-      habitat: habitat.trim(),
-      dateFound: new Date(),
-      season: getSeason(),
-      isPrivate,
-      userId: 'current-user', // In a real app, this would be the authenticated user
-      tags: [], // Could be enhanced to allow custom tags
-    };
+    if (isEditMode && editFind) {
+      // Update existing find
+      const updatedFind: Partial<ForagingFind> = {
+        name: name.trim(),
+        category,
+        location: {
+          latitude: findLocation.latitude,
+          longitude: findLocation.longitude,
+          address: address || undefined,
+        },
+        photos,
+        notes: notes.trim(),
+        habitat: habitat.trim(),
+        isPrivate,
+      };
 
-    addFind(find);
-    
-    Alert.alert(
-      'Success!', 
-      'Your find has been logged successfully',
-      [
-        { text: 'OK', onPress: () => {
-          // Reset form
-          setName('');
-          setNotes('');
-          setHabitat('');
-          setPhotos([]);
-          setCategory('plant');
-          setIsPrivate(false);
-          
-          // Navigate back to map if came from pin placement
-          if (presetLogLocation) {
-            setPresetLogLocation(null); // Clear the preset location
-            navigation.goBack();
-          }
-        }}
-      ]
-    );
+      updateFind(editFind.id, updatedFind);
+      
+      Alert.alert(
+        'Success!', 
+        'Your find has been updated successfully',
+        [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]
+      );
+    } else {
+      // Create new find
+      const find: ForagingFind = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        category,
+        location: {
+          latitude: findLocation.latitude,
+          longitude: findLocation.longitude,
+          address: address || undefined,
+        },
+        photos,
+        notes: notes.trim(),
+        habitat: habitat.trim(),
+        dateFound: new Date(),
+        season: getSeason(),
+        isPrivate,
+        userId: 'current-user', // In a real app, this would be the authenticated user
+        tags: [], // Could be enhanced to allow custom tags
+      };
+
+      addFind(find);
+      
+      Alert.alert(
+        'Success!', 
+        'Your find has been logged successfully',
+        [
+          { text: 'OK', onPress: () => {
+            // Reset form
+            setName('');
+            setNotes('');
+            setHabitat('');
+            setPhotos([]);
+            setCategory('plant');
+            setIsPrivate(false);
+            
+            // Navigate back to map if came from pin placement
+            if (presetLogLocation) {
+              setPresetLogLocation(null); // Clear the preset location
+              navigation.goBack();
+            }
+          }}
+        ]
+      );
+    }
   };
 
   const selectSuggestion = (suggestion: any) => {
@@ -413,16 +454,16 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
         {/* Submit Button */}
         <Pressable
           onPress={handleSubmit}
-          disabled={!name.trim() || (!location && !presetLogLocation && !manualMode)}
+          disabled={!name.trim() || (!isEditMode && !location && !presetLogLocation && !manualMode)}
           className={cn(
             "py-4 rounded-xl mb-8",
-            name.trim() && (location || presetLogLocation || manualMode)
+            name.trim() && (isEditMode || location || presetLogLocation || manualMode)
               ? "bg-green-500"
               : "bg-gray-300"
           )}
         >
           <Text className="text-white font-semibold text-center text-lg">
-            Log Find
+            {isEditMode ? 'Update Find' : 'Log Find'}
           </Text>
         </Pressable>
       </ScrollView>

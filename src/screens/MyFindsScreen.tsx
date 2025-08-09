@@ -308,21 +308,23 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
           {/* Sort Options */}
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-sm font-medium text-gray-700">Sort by:</Text>
-            <View className="flex-row bg-gray-100 rounded-full p-1">
+            <View className="flex-row bg-gray-100 rounded-full p-1 flex-shrink-0">
               {(['date', 'name', 'category'] as const).map((option) => (
                 <Pressable
                   key={option}
                   onPress={() => setSortBy(option)}
                   className={cn(
-                    "px-4 py-2 rounded-full min-w-[65px] items-center",
+                    "px-3 py-2 rounded-full items-center flex-shrink-0",
                     sortBy === option ? 'bg-white shadow-sm' : ''
                   )}
+                  style={{ minWidth: 60 }}
                 >
                   <Text
                     className={cn(
                       "text-xs font-semibold capitalize",
                       sortBy === option ? 'text-green-600' : 'text-gray-600'
                     )}
+                    numberOfLines={1}
                   >
                     {option}
                   </Text>

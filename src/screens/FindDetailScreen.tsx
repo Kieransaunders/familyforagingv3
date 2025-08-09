@@ -102,6 +102,13 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
               )}
               
               <Pressable
+                onPress={() => navigation.navigate('LogFind', { editFind: find })}
+                className="bg-blue-100 p-2 rounded-full"
+              >
+                <Ionicons name="pencil" size={20} color="#3b82f6" />
+              </Pressable>
+              
+              <Pressable
                 onPress={handleDelete}
                 className="bg-red-100 p-2 rounded-full"
               >

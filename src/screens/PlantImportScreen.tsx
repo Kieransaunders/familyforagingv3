@@ -368,16 +368,8 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
             </View>
 
             <Pressable
-              onPress={handlePickFile}
-              className="bg-green-500 py-4 px-6 rounded-xl flex-row items-center justify-center mb-4"
-            >
-              <Ionicons name="cloud-upload" size={20} color="white" />
-              <Text className="text-white font-semibold ml-2">Choose CSV File</Text>
-            </Pressable>
-
-            <Pressable
               onPress={handleDownloadTemplate}
-              className="bg-blue-500 py-4 px-6 rounded-xl flex-row items-center justify-center"
+              className="bg-blue-500 py-4 px-6 rounded-xl flex-row items-center justify-center mb-4"
             >
               <Ionicons name="download" size={20} color="white" />
               <Text className="text-white font-semibold ml-2">Download Template</Text>
@@ -430,6 +422,17 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
             </Text>
           </View>
         </ScrollView>
+
+        {/* Bottom Import Button */}
+        <View className="bg-white p-4 border-t border-gray-200">
+          <Pressable
+            onPress={handlePickFile}
+            className="bg-green-500 py-4 px-6 rounded-xl flex-row items-center justify-center"
+          >
+            <Ionicons name="cloud-upload" size={20} color="white" />
+            <Text className="text-white font-semibold ml-2">Choose CSV File</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
