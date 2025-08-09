@@ -63,99 +63,168 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
     }
   };
 
-  const renderFindCard = (find: ForagingFind) => (
-    <Pressable
-      key={find.id}
-      onPress={() => navigation.navigate('FindDetail', { find })}
-      className="bg-white rounded-xl p-0 mb-4 shadow-sm border border-gray-100"
-    >
-      {/* Image Section */}
-      {find.photos.length > 0 ? (
-        <View className="relative">
-          <Image
-            source={{ uri: find.photos[0] }}
-            className="w-full h-48 rounded-t-xl"
-            resizeMode="cover"
-          />
-          <View className="absolute top-3 right-3">
-            <View 
-              className="px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm"
-            >
-              <Text 
-                className="text-xs font-semibold capitalize"
-                style={{ color: getCategoryColor(find.category) }}
-              >
-                {find.category}
-              </Text>
-            </View>
-          </View>
-          {find.isPrivate && (
-            <View className="absolute top-3 left-3 bg-black/30 rounded-full p-1">
-              <Ionicons name="lock-closed" size={16} color="white" />
-            </View>
-          )}
-        </View>
-      ) : (
-        <View className="w-full h-32 bg-gray-100 rounded-t-xl items-center justify-center">
-          <Ionicons name="image-outline" size={32} color="#9ca3af" />
-          <Text className="text-xs text-gray-500 mt-1">No Photo</Text>
-        </View>
-      )}
+  const renderFindCard = (find: ForagingFind) => {
+    const { recipes } = useForagingStore();
+    const relatedRecipes = recipes.filter(recipe => 
+      recipe.requiredFinds.some(ingredient => 
+        ingredient.toLowerCase().includes(find.name.toLowerCase()) ||
+        find.name.toLowerCase().includes(ingredient.toLowerCase())
+      )
+    );
 
-      {/* Content Section */}
-      <View className="p-4">
-        <View className="flex-row items-start justify-between mb-2">
-          <View className="flex-1">
-            <Text className="text-lg font-bold text-gray-900 mb-1">{find.name}</Text>
-            {!find.photos.length && (
+    return (
+      <Pressable
+        key={find.id}
+        onPress={() => navigation.navigate('FindDetail', { find })}
+        className="bg-white rounded-xl p-0 mb-6 shadow-sm border border-gray-100"
+      >
+        {/* Image Section */}
+        {find.photos.length > 0 ? (
+          <View className="relative">
+            <Image
+              source={{ uri: find.photos[0] }}
+              className="w-full h-48 rounded-t-xl"
+              resizeMode="cover"
+            />
+            
+            {/* Category and Recipe Badges */}
+            <View className="absolute top-3 right-3 flex-row gap-2">
               <View 
-                className="self-start px-2 py-1 rounded-full mb-2"
-                style={{ backgroundColor: getCategoryColor(find.category) + '20' }}
+                className="px-3 py-1 rounded-full shadow-sm"
+                style={{ backgroundColor: getCategoryColor(find.category) + 'E6' }}
               >
                 <Text 
-                  className="text-xs font-semibold capitalize"
-                  style={{ color: getCategoryColor(find.category) }}
+                  className="text-xs font-bold capitalize text-white"
                 >
                   {find.category}
                 </Text>
               </View>
+              
+              {relatedRecipes.length > 0 && (
+                <Pressable 
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    navigation.navigate('Recipes');
+                  }}
+                  className="bg-orange-500 rounded-full p-2 shadow-sm"
+                >
+                  <Ionicons name="restaurant" size={12} color="white" />
+                </Pressable>
+              )}
+            </View>
+            
+            {find.isPrivate && (
+              <View className="absolute top-3 left-3 bg-black/50 rounded-full p-2">
+                <Ionicons name="lock-closed" size={16} color="white" />
+              </View>
             )}
           </View>
-        </View>
+        ) : (
+          <Pressable 
+            onPress={(e) => {
+              e.stopPropagation();
+              // Could open camera or photo picker
+            }}
+            className="w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-t-xl items-center justify-center border-2 border-dashed border-gray-300"
+          >
+            <View className="bg-green-100 rounded-full p-3 mb-2">
+              <Ionicons name="camera" size={24} color="#22c55e" />
+            </View>
+            <Text className="text-sm font-medium text-gray-600">Add Photo</Text>
+            <Text className="text-xs text-gray-400">Tap to capture</Text>
+          </Pressable>
+        )}
 
-        <Text className="text-sm text-gray-600 mb-3 leading-5" numberOfLines={2}>
-          {find.notes || 'No notes added'}
-        </Text>
+        {/* Content Section */}
+        <View className="p-5">
+          <View className="flex-row items-start justify-between mb-3">
+            <View className="flex-1">
+              <Text className="text-xl font-bold text-gray-900 mb-1">{find.name}</Text>
+              {!find.photos.length && (
+                <View className="flex-row items-center gap-2 mb-2">
+                  <View 
+                    className="px-3 py-1 rounded-full"
+                    style={{ backgroundColor: getCategoryColor(find.category) + '20' }}
+                  >
+                    <Text 
+                      className="text-xs font-bold capitalize"
+                      style={{ color: getCategoryColor(find.category) }}
+                    >
+                      {find.category}
+                    </Text>
+                  </View>
+                  
+                  {relatedRecipes.length > 0 && (
+                    <Pressable 
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        navigation.navigate('Recipes');
+                      }}
+                      className="bg-orange-100 px-2 py-1 rounded-full flex-row items-center"
+                    >
+                      <Ionicons name="restaurant" size={12} color="#ea580c" />
+                      <Text className="text-xs font-medium text-orange-700 ml-1">Recipe</Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
 
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Ionicons name="calendar" size={14} color="#6b7280" />
-            <Text className="text-xs text-gray-500 ml-1">
-              {new Date(find.dateFound).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                year: 'numeric'
-              })}
+          {find.notes ? (
+            <Text className="text-sm text-gray-600 mb-4 leading-6" numberOfLines={2}>
+              {find.notes}
             </Text>
-          </View>
-          
-          <View className="flex-row items-center space-x-2">
-            {find.location.latitude !== 0 && find.location.longitude !== 0 ? (
-              <View className="flex-row items-center">
-                <Ionicons name="location" size={14} color="#22c55e" />
-                <Text className="text-xs text-green-600 ml-1">Located</Text>
-              </View>
-            ) : (
-              <View className="flex-row items-center">
-                <Ionicons name="location-outline" size={14} color="#9ca3af" />
-                <Text className="text-xs text-gray-400 ml-1">No location</Text>
-              </View>
-            )}
+          ) : (
+            <Pressable 
+              onPress={(e) => {
+                e.stopPropagation();
+                navigation.navigate('FindDetail', { find });
+              }}
+              className="mb-4"
+            >
+              <Text className="text-sm text-gray-400 italic">
+                Add a note about this find...
+              </Text>
+            </Pressable>
+          )}
+
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Ionicons name="calendar" size={16} color="#6b7280" />
+              <Text className="text-sm text-gray-600 ml-2 font-medium">
+                {new Date(find.dateFound).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </Text>
+            </View>
+            
+            <View className="flex-row items-center">
+              {find.location.latitude !== 0 && find.location.longitude !== 0 ? (
+                <Pressable 
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    navigation.navigate('Map');
+                  }}
+                  className="flex-row items-center bg-green-100 px-3 py-2 rounded-full"
+                >
+                  <Ionicons name="location" size={14} color="#22c55e" />
+                  <Text className="text-xs font-bold text-green-700 ml-1">View on Map</Text>
+                </Pressable>
+              ) : (
+                <View className="flex-row items-center bg-gray-100 px-3 py-2 rounded-full">
+                  <Ionicons name="location-outline" size={14} color="#9ca3af" />
+                  <Text className="text-xs font-medium text-gray-500 ml-1">No location</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -193,43 +262,66 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
 
           {/* Stats Overview */}
           {finds.length > 0 && !showSearch && (
-            <View className="flex-row bg-green-50 rounded-xl p-3 mb-4">
-              <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold text-green-700">{finds.length}</Text>
-                <Text className="text-xs text-green-600">Total Finds</Text>
+            <View className="flex-row gap-3 mb-4">
+              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-green-100">
+                <View className="flex-row items-center">
+                  <View className="bg-green-100 rounded-full p-2 mr-3">
+                    <Ionicons name="leaf" size={16} color="#22c55e" />
+                  </View>
+                  <View>
+                    <Text className="text-2xl font-bold text-gray-900">{finds.length}</Text>
+                    <Text className="text-xs text-gray-600 font-medium">Total Finds</Text>
+                  </View>
+                </View>
               </View>
-              <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold text-green-700">
-                  {new Set(finds.map(f => f.category)).size}
-                </Text>
-                <Text className="text-xs text-green-600">Categories</Text>
+              
+              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-blue-100">
+                <View className="flex-row items-center">
+                  <View className="bg-blue-100 rounded-full p-2 mr-3">
+                    <Ionicons name="apps" size={16} color="#3b82f6" />
+                  </View>
+                  <View>
+                    <Text className="text-2xl font-bold text-gray-900">
+                      {new Set(finds.map(f => f.category)).size}
+                    </Text>
+                    <Text className="text-xs text-gray-600 font-medium">Categories</Text>
+                  </View>
+                </View>
               </View>
-              <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold text-green-700">
-                  {finds.filter(f => f.photos.length > 0).length}
-                </Text>
-                <Text className="text-xs text-green-600">With Photos</Text>
+              
+              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-purple-100">
+                <View className="flex-row items-center">
+                  <View className="bg-purple-100 rounded-full p-2 mr-3">
+                    <Ionicons name="camera" size={16} color="#8b5cf6" />
+                  </View>
+                  <View>
+                    <Text className="text-2xl font-bold text-gray-900">
+                      {finds.filter(f => f.photos.length > 0).length}
+                    </Text>
+                    <Text className="text-xs text-gray-600 font-medium">With Photos</Text>
+                  </View>
+                </View>
               </View>
             </View>
           )}
           
           {/* Sort Options */}
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center justify-between mb-4">
             <Text className="text-sm font-medium text-gray-700">Sort by:</Text>
-            <View className="flex-row space-x-2">
+            <View className="flex-row bg-gray-100 rounded-full p-1">
               {(['date', 'name', 'category'] as const).map((option) => (
                 <Pressable
                   key={option}
                   onPress={() => setSortBy(option)}
                   className={cn(
-                    "px-3 py-1 rounded-full",
-                    sortBy === option ? 'bg-green-500' : 'bg-gray-200'
+                    "px-4 py-2 rounded-full min-w-[65px] items-center",
+                    sortBy === option ? 'bg-white shadow-sm' : ''
                   )}
                 >
                   <Text
                     className={cn(
-                      "text-xs font-medium capitalize",
-                      sortBy === option ? 'text-white' : 'text-gray-700'
+                      "text-xs font-semibold capitalize",
+                      sortBy === option ? 'text-green-600' : 'text-gray-600'
                     )}
                   >
                     {option}
@@ -239,9 +331,13 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
             </View>
           </View>
 
-          {/* Category Filters */}
+
+        </View>
+
+        {/* Sticky Category Filters */}
+        <View className="bg-white px-4 py-3 border-b border-gray-100">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row space-x-3 pb-1">
+            <View className="flex-row space-x-3">
               {categories.map((category) => (
                 <Pressable
                   key={category.key}
@@ -249,18 +345,18 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                   className={cn(
                     "flex-row items-center px-4 py-2 rounded-full border",
                     filterCategory === category.key
-                      ? 'bg-green-500 border-green-500'
+                      ? 'bg-green-500 border-green-500 shadow-sm'
                       : 'bg-white border-gray-200'
                   )}
                 >
                   <Ionicons 
                     name={category.icon as keyof typeof Ionicons.glyphMap} 
                     size={16} 
-                    color={filterCategory === category.key ? 'white' : '#6b7280'} 
+                    color={filterCategory === category.key ? 'white' : getCategoryColor(category.key === 'all' ? 'plant' : category.key)} 
                   />
                   <Text
                     className={cn(
-                      "text-sm font-medium ml-2",
+                      "text-sm font-semibold ml-2",
                       filterCategory === category.key ? 'text-white' : 'text-gray-700'
                     )}
                   >
