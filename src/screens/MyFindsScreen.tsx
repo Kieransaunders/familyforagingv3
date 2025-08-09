@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -60,6 +60,22 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
       case 'nut': return '#8b5cf6';
       case 'herb': return '#06b6d4';
       default: return '#6b7280';
+    }
+  };
+
+  const openInMaps = async (find: ForagingFind) => {
+    const url = `maps://?q=${find.location.latitude},${find.location.longitude}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        // Fallback to web maps if native maps app isn't available
+        const webUrl = `https://maps.google.com/maps?q=${find.location.latitude},${find.location.longitude}`;
+        await Linking.openURL(webUrl);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to open maps');
     }
   };
 
@@ -205,7 +221,7 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                 <Pressable 
                   onPress={(e) => {
                     e.stopPropagation();
-                    navigation.navigate('Map');
+                    openInMaps(find);
                   }}
                   className="flex-row items-center bg-green-100 px-3 py-2 rounded-full"
                 >
