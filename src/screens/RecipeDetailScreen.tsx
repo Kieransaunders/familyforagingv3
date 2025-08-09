@@ -20,6 +20,7 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
     favoriteRecipes, 
     toggleFavoriteRecipe, 
     updateRecipe, 
+    deleteRecipe,
     finds 
   } = useForagingStore();
 
@@ -58,6 +59,28 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
     });
   };
 
+  const handleEditRecipe = () => {
+    navigation.navigate('RecipeCreate', { editRecipe: recipe });
+  };
+
+  const handleDeleteRecipe = () => {
+    Alert.alert(
+      'Delete Recipe',
+      'Are you sure you want to delete this recipe? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteRecipe(recipe.id);
+            navigation.goBack();
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="flex-1">
@@ -73,16 +96,32 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
               </Text>
             </View>
             
-            <Pressable
-              onPress={() => toggleFavoriteRecipe(recipe.id)}
-              className="ml-4"
-            >
-              <Ionicons
-                name={isFavorite ? "heart" : "heart-outline"}
-                size={32}
-                color={isFavorite ? "#ef4444" : "#6b7280"}
-              />
-            </Pressable>
+            <View className="flex-row items-center gap-2 ml-4">
+              <Pressable
+                onPress={() => toggleFavoriteRecipe(recipe.id)}
+                className="p-2"
+              >
+                <Ionicons
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={28}
+                  color={isFavorite ? "#ef4444" : "#6b7280"}
+                />
+              </Pressable>
+              
+              <Pressable
+                onPress={handleEditRecipe}
+                className="bg-blue-100 p-2 rounded-full"
+              >
+                <Ionicons name="pencil" size={20} color="#3b82f6" />
+              </Pressable>
+              
+              <Pressable
+                onPress={handleDeleteRecipe}
+                className="bg-red-100 p-2 rounded-full"
+              >
+                <Ionicons name="trash-outline" size={20} color="#ef4444" />
+              </Pressable>
+            </View>
           </View>
 
           {/* Recipe Info */}

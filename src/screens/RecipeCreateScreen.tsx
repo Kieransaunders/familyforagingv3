@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface RecipeCreateScreenProps {
   navigation: any;
+  route: any;
 }
 
 const STEPS = [
@@ -24,7 +25,9 @@ const CATEGORIES = ['drinks', 'meals', 'preserves', 'medicinal'] as const;
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 
-export default function RecipeCreateScreen({ navigation }: RecipeCreateScreenProps) {
+export default function RecipeCreateScreen({ navigation, route }: RecipeCreateScreenProps) {
+  const editRecipe = route?.params?.editRecipe as Recipe | undefined;
+  const isEditing = !!editRecipe;
   const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,7 +46,26 @@ export default function RecipeCreateScreen({ navigation }: RecipeCreateScreenPro
   const [tags, setTags] = useState<string[]>([]);
   const [userNotes, setUserNotes] = useState('');
 
-  const { addRecipe, finds } = useForagingStore();
+  const { addRecipe, updateRecipe, finds } = useForagingStore();
+
+  // Initialize form with edit data
+  useEffect(() => {
+    if (editRecipe) {
+      setTitle(editRecipe.title);
+      setDescription(editRecipe.description);
+      setCategory(editRecipe.category);
+      setDifficulty(editRecipe.difficulty);
+      setPrepTime(editRecipe.prepTime.toString());
+      setCookTime(editRecipe.cookTime.toString());
+      setServings(editRecipe.servings.toString());
+      setIngredients(editRecipe.ingredients);
+      setInstructions(editRecipe.instructions);
+      setSelectedSeasons(editRecipe.season);
+      setRequiredFinds(editRecipe.requiredFinds);
+      setTags(editRecipe.tags);
+      setUserNotes(editRecipe.userNotes || '');
+    }
+  }, [editRecipe]);
 
   // Validation
   const validateStep = (step: number): boolean => {
