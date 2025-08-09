@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Family Foraging",
+    "slug": "family-foraging",
+    "scheme": "family-foraging",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/images/icon.png"
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "icon": "./assets/images/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    }
+  }
+}
