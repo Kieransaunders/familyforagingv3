@@ -262,44 +262,38 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
 
           {/* Stats Overview */}
           {finds.length > 0 && !showSearch && (
-            <View className="flex-row gap-3 mb-4">
-              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-green-100">
-                <View className="flex-row items-center">
-                  <View className="bg-green-100 rounded-full p-2 mr-3">
+            <View className="flex-row gap-2 mb-4">
+              <View className="flex-1 bg-white rounded-xl p-3 shadow-sm border border-green-100">
+                <View className="items-center">
+                  <View className="bg-green-100 rounded-full p-2 mb-2">
                     <Ionicons name="leaf" size={16} color="#22c55e" />
                   </View>
-                  <View>
-                    <Text className="text-2xl font-bold text-gray-900">{finds.length}</Text>
-                    <Text className="text-xs text-gray-600 font-medium">Total Finds</Text>
-                  </View>
+                  <Text className="text-2xl font-bold text-gray-900">{finds.length}</Text>
+                  <Text className="text-xs text-gray-600 font-medium text-center">Total Finds</Text>
                 </View>
               </View>
               
-              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-blue-100">
-                <View className="flex-row items-center">
-                  <View className="bg-blue-100 rounded-full p-2 mr-3">
+              <View className="flex-1 bg-white rounded-xl p-3 shadow-sm border border-blue-100">
+                <View className="items-center">
+                  <View className="bg-blue-100 rounded-full p-2 mb-2">
                     <Ionicons name="apps" size={16} color="#3b82f6" />
                   </View>
-                  <View>
-                    <Text className="text-2xl font-bold text-gray-900">
-                      {new Set(finds.map(f => f.category)).size}
-                    </Text>
-                    <Text className="text-xs text-gray-600 font-medium">Categories</Text>
-                  </View>
+                  <Text className="text-2xl font-bold text-gray-900">
+                    {new Set(finds.map(f => f.category)).size}
+                  </Text>
+                  <Text className="text-xs text-gray-600 font-medium text-center">Categories</Text>
                 </View>
               </View>
               
-              <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-purple-100">
-                <View className="flex-row items-center">
-                  <View className="bg-purple-100 rounded-full p-2 mr-3">
+              <View className="flex-1 bg-white rounded-xl p-3 shadow-sm border border-purple-100">
+                <View className="items-center">
+                  <View className="bg-purple-100 rounded-full p-2 mb-2">
                     <Ionicons name="camera" size={16} color="#8b5cf6" />
                   </View>
-                  <View>
-                    <Text className="text-2xl font-bold text-gray-900">
-                      {finds.filter(f => f.photos.length > 0).length}
-                    </Text>
-                    <Text className="text-xs text-gray-600 font-medium">With Photos</Text>
-                  </View>
+                  <Text className="text-2xl font-bold text-gray-900">
+                    {finds.filter(f => f.photos.length > 0).length}
+                  </Text>
+                  <Text className="text-xs text-gray-600 font-medium text-center">With Photos</Text>
                 </View>
               </View>
             </View>
