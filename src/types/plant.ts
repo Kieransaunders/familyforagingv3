@@ -22,6 +22,11 @@ export interface PlantIdentification {
   size: string;
 }
 
+export interface MonthFlags {
+  jan: boolean; feb: boolean; mar: boolean; apr: boolean; may: boolean; jun: boolean;
+  jul: boolean; aug: boolean; sep: boolean; oct: boolean; nov: boolean; dec: boolean;
+}
+
 export interface Plant {
   id: string;
   name: string;
@@ -36,6 +41,7 @@ export interface Plant {
   ethics: string[];
   funFacts?: string;
   conservationStatus?: 'common' | 'uncommon' | 'rare' | 'protected';
+  inSeason?: MonthFlags; // Monthly availability flags
 }
 
 export interface PlantFilter {

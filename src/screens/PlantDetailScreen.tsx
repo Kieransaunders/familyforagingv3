@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getPlantById } from '../data/plants';
-import { Plant } from '../types/plant';
+import * as ImagePicker from 'expo-image-picker';
+import { useForagingStore } from '../state/foraging-store';
+import { MonthFlags, Plant } from '../types/plant';
 
 interface PlantDetailScreenProps {
   navigation: any;
@@ -12,8 +13,23 @@ interface PlantDetailScreenProps {
 
 export default function PlantDetailScreen({ navigation, route }: PlantDetailScreenProps) {
   const { plantId } = route.params;
-  const plant = getPlantById(plantId);
+  const { plants, updatePlant } = useForagingStore();
+  const plant = useMemo(() => plants.find(p => p.id === plantId), [plants, plantId]);
   const [expandedSections, setExpandedSections] = useState<string[]>(['identification']);
+  const [isEditing, setIsEditing] = useState(false);
+  const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
+  const [months, setMonths] = useState<MonthFlags>({
+    jan: false, feb: false, mar: false, apr: false, may: false, jun: false,
+    jul: false, aug: false, sep: false, oct: false, nov: false, dec: false,
+  });
+  const [images, setImages] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (plant) {
+      setMonths(plant.inSeason || months);
+      setImages(plant.images || []);
+    }
+  }, [plant?.id]);
 
   if (!plant) {
     return (
@@ -145,7 +161,105 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
             <Ionicons name="restaurant" size={20} color="white" />
             <Text className="text-white font-semibold ml-2">Recipes</Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => setIsEditing(!isEditing)}
+            className="w-12 bg-gray-800 rounded-xl items-center justify-center"
+          >
+            <Ionicons name={isEditing ? 'close' : 'create'} size={20} color="white" />
+          </Pressable>
         </View>
+
+        {/* Edit Panel */}
+        {isEditing && (
+          <View className="px-4">
+            <View className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
+              <Text className="text-lg font-semibold text-gray-900 mb-3">In Season Months</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const).map((label, idx) => {
+                  const key = monthKeys[idx];
+                  const active = (months as any)[key];
+                  return (
+                    <Pressable
+                      key={label}
+                      onPress={() => setMonths({ ...months, [key]: !active } as MonthFlags)}
+                      className={active ? 'px-3 py-2 rounded-full bg-green-500' : 'px-3 py-2 rounded-full bg-gray-100'}
+                    >
+                      <Text className={active ? 'text-white font-medium' : 'text-gray-700 font-medium'}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View className="flex-row flex-wrap gap-2 mt-3">
+                {[{label:'Spring', months:[2,3,4]},{label:'Summer', months:[5,6,7]},{label:'Autumn', months:[8,9,10]},{label:'Winter', months:[11,0,1]}].map((preset) => (
+                  <Pressable
+                    key={preset.label}
+                    onPress={() => {
+                      const next: any = { ...months };
+                      preset.months.forEach(m=>{ next[monthKeys[m]] = true; });
+                      setMonths(next as MonthFlags);
+                    }}
+                    className="px-3 py-2 rounded-full bg-gray-100"
+                  >
+                    <Text className="text-gray-700 font-medium">{preset.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
+              <Text className="text-lg font-semibold text-gray-900 mb-3">Photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">
+                {images.map((uri, idx) => (
+                  <View key={idx} className="mx-1 items-center">
+                    <Image source={{ uri }} className="w-24 h-24 rounded-lg" resizeMode="cover" />
+                    <View className="flex-row mt-2 gap-2">
+                      <Pressable onPress={() => setImages(images.filter((_,i)=>i!==idx))} className="px-2 py-1 rounded bg-red-100">
+                        <Text className="text-red-700 text-xs">Remove</Text>
+                      </Pressable>
+                      <Pressable onPress={() => updatePlant(plant.id, { heroImage: uri })} className="px-2 py-1 rounded bg-blue-100">
+                        <Text className="text-blue-700 text-xs">Make cover</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
+                <Pressable
+                  onPress={async () => {
+                    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+                    if (!res.canceled && res.assets?.[0]?.uri) {
+                      setImages([...images, res.assets[0].uri]);
+                    }
+                  }}
+                  className="w-24 h-24 rounded-lg bg-gray-100 items-center justify-center ml-2"
+                >
+                  <Ionicons name="add" size={24} color="#6b7280" />
+                </Pressable>
+              </ScrollView>
+            </View>
+
+            <View className="flex-row gap-3 mb-4">
+              <Pressable
+                onPress={() => {
+                  updatePlant(plant.id, { inSeason: months, images });
+                  setIsEditing(false);
+                }}
+                className="flex-1 bg-green-500 rounded-xl py-3 items-center"
+              >
+                <Text className="text-white font-semibold">Save Changes</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setMonths(plant.inSeason || months);
+                  setImages(plant.images || []);
+                  setIsEditing(false);
+                }}
+                className="flex-1 bg-gray-200 rounded-xl py-3 items-center"
+              >
+                <Text className="text-gray-800 font-semibold">Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         {/* Content Sections */}
         <View className="px-4 pb-6">

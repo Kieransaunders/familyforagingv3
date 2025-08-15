@@ -42,7 +42,9 @@ export function generatePlantCSVTemplate(): string {
     'recipes',
     'ethics',
     'funFacts',
-    'conservationStatus'
+    'conservationStatus',
+    // Monthly in-season flags
+    'inJan','inFeb','inMar','inApr','inMay','inJun','inJul','inAug','inSep','inOct','inNov','inDec'
   ];
   
   const sampleData = [
@@ -67,7 +69,9 @@ export function generatePlantCSVTemplate(): string {
     'wild-strawberry-jam|strawberry-leaf-tea',
     'Only take what you need|Leave plenty for wildlife|Don\'t uproot plants',
     'Wild strawberries are much smaller but more flavorful than cultivated ones!',
-    'common'
+    'common',
+    // Months (true where in-season)
+    'false','false','true','true','true','false','false','false','false','false','false','false'
   ];
 
   return [
@@ -203,6 +207,21 @@ function parseRowToPlant(headers: string[], values: string[], rowNumber: number)
     return value.split('|').map(item => item.trim()).filter(item => item.length > 0);
   };
 
+  const inSeason = {
+    jan: parseBooleanField('inJan'),
+    feb: parseBooleanField('inFeb'),
+    mar: parseBooleanField('inMar'),
+    apr: parseBooleanField('inApr'),
+    may: parseBooleanField('inMay'),
+    jun: parseBooleanField('inJun'),
+    jul: parseBooleanField('inJul'),
+    aug: parseBooleanField('inAug'),
+    sep: parseBooleanField('inSep'),
+    oct: parseBooleanField('inOct'),
+    nov: parseBooleanField('inNov'),
+    dec: parseBooleanField('inDec'),
+  } as Plant['inSeason'];
+
   const plant: Plant = {
     id: uuidv4(),
     name: rowData.name.trim(),
@@ -232,7 +251,8 @@ function parseRowToPlant(headers: string[], values: string[], rowNumber: number)
     },
     ethics: parseArrayField('ethics'),
     funFacts: rowData.funFacts?.trim() || undefined,
-    conservationStatus: rowData.conservationStatus as Plant['conservationStatus'] || 'common'
+    conservationStatus: rowData.conservationStatus as Plant['conservationStatus'] || 'common',
+    inSeason,
   };
 
   // Additional validation
@@ -281,12 +301,14 @@ export function exportPlantsToCSV(plants: Plant[]): string {
     'recipes',
     'ethics',
     'funFacts',
-    'conservationStatus'
+    'conservationStatus',
+    'inJan','inFeb','inMar','inApr','inMay','inJun','inJul','inAug','inSep','inOct','inNov','inDec'
   ];
 
   const csvRows = [headers.join(',')];
 
   plants.forEach(plant => {
+    const m = plant.inSeason || {jan:false,feb:false,mar:false,apr:false,may:false,jun:false,jul:false,aug:false,sep:false,oct:false,nov:false,dec:false};
     const row = [
       `"${plant.name.replace(/"/g, '""')}"`,
       `"${plant.latinName.replace(/"/g, '""')}"`,
@@ -309,7 +331,8 @@ export function exportPlantsToCSV(plants: Plant[]): string {
       `"${plant.uses.recipes.join('|')}"`,
       `"${plant.ethics.join('|')}"`,
       `"${(plant.funFacts || '').replace(/"/g, '""')}"`,
-      plant.conservationStatus || 'common'
+      plant.conservationStatus || 'common',
+      m.jan.toString(), m.feb.toString(), m.mar.toString(), m.apr.toString(), m.may.toString(), m.jun.toString(), m.jul.toString(), m.aug.toString(), m.sep.toString(), m.oct.toString(), m.nov.toString(), m.dec.toString()
     ];
     csvRows.push(row.join(','));
   });

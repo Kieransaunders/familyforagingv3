@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Callout, PROVIDER_APPLE, MapPressEvent } from 'react-native-maps';
+import MapView, { Marker, Callout, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useForagingStore } from '../state/foraging-store';
@@ -30,7 +30,8 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     setShowHeatZones,
     currentLocation,
     setCurrentLocation,
-    setPresetLogLocation 
+    setPresetLogLocation,
+    plants,
   } = useForagingStore();
 
   const seasonalSuggestions = getCurrentSeasonSuggestions();
@@ -52,17 +53,21 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     })();
   }, []);
 
+  const monthIndex = new Date().getMonth(); // 0-11
+  const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
+
   const filteredFinds = finds.filter(find => {
-    // Filter out manual entries without valid GPS coordinates
-    if (find.location.latitude === 0 && find.location.longitude === 0) {
-      return false;
-    }
-    
-    if (mapFilter.category.length > 0 && !mapFilter.category.includes(find.category)) {
-      return false;
-    }
-    if (!mapFilter.showPrivate && find.isPrivate) {
-      return false;
+    if (find.location.latitude === 0 && find.location.longitude === 0) return false;
+    if (mapFilter.category.length > 0 && !mapFilter.category.includes(find.category)) return false;
+    if (!mapFilter.showPrivate && find.isPrivate) return false;
+
+    if (mapFilter.inSeasonNow) {
+      const matchedPlant = plants.find(p => p.name.toLowerCase().trim() === find.name.toLowerCase().trim());
+      if (!matchedPlant) return false;
+      const flags = matchedPlant.inSeason;
+      if (!flags) return false;
+      const key = monthKeys[monthIndex];
+      if (!(flags as any)[key]) return false;
     }
     return true;
   });
@@ -161,7 +166,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
         <MapView
           ref={mapRef}
           style={{ flex: 1 }}
-          provider={PROVIDER_APPLE}
+          
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -363,42 +368,64 @@ export default function MapScreen({ navigation }: MapScreenProps) {
                 />
               </Pressable>
             </View>
+
+            <View className="flex-row items-center justify-between mt-3">
+              <Text className="text-sm text-gray-600">In season now</Text>
+              <Pressable
+                onPress={() => setMapFilter({ inSeasonNow: !mapFilter.inSeasonNow })}
+                className={cn(
+                  "w-12 h-6 rounded-full p-1",
+                  mapFilter.inSeasonNow ? "bg-green-500" : "bg-gray-200"
+                )}
+              >
+                <View
+                  className={cn(
+                    "w-4 h-4 rounded-full bg-white transition-transform",
+                    mapFilter.inSeasonNow ? "translate-x-6" : "translate-x-0"
+                  )}
+                />
+              </Pressable>
+            </View>
           </View>
         )}
 
         {/* Seasonal Suggestions Panel */}
-        {showSeasonalSuggestions && (
-          <View className="absolute bottom-20 left-4 right-20 bg-white rounded-2xl p-4 shadow-lg max-h-80">
-            <Text className="font-semibold text-gray-900 mb-3">
-              In Season Now ({seasonalSuggestions.length})
-            </Text>
-            <ScrollView className="max-h-64">
-              {seasonalSuggestions.map((suggestion, index) => (
-                <View key={index} className="mb-3 last:mb-0">
-                  <Text className="font-medium text-gray-900">{suggestion.name}</Text>
-                  <Text className="text-sm text-gray-600 capitalize">
-                    {suggestion.category}
+          {showSeasonalSuggestions && (
+            <View className="absolute bottom-20 left-4 right-20 bg-white rounded-2xl p-4 shadow-lg max-h-80">
+              <Text className="font-semibold text-gray-900 mb-3">
+                In Season Now
+              </Text>
+              <ScrollView className="max-h-64">
+                {plants.filter(p => {
+                  const flags = p.inSeason;
+                  if (!flags) return false;
+                  const key = monthKeys[monthIndex];
+                  return Boolean((flags as any)[key]);
+                }).map((p) => (
+                  <View key={p.id} className="mb-3 last:mb-0">
+                    <Text className="font-medium text-gray-900">{p.name}</Text>
+                    <Text className="text-sm text-gray-600 capitalize">{p.category}</Text>
+                    {p.identification.keyFeatures[0] ? (
+                      <Text className="text-xs text-gray-500 mt-1">{p.identification.keyFeatures[0]}</Text>
+                    ) : null}
+                  </View>
+                ))}
+              </ScrollView>
+              
+              {/* Manual Entries Info */}
+              {finds.some(find => find.location.latitude === 0 && find.location.longitude === 0) && (
+                <View className="mt-4 pt-3 border-t border-gray-200">
+                  <Text className="text-sm text-blue-600 font-medium">
+                    📝 Manual entries available in Recipes section
                   </Text>
                   <Text className="text-xs text-gray-500 mt-1">
-                    {suggestion.description}
+                    Finds logged without GPS don't appear on map
                   </Text>
                 </View>
-              ))}
-            </ScrollView>
-            
-            {/* Manual Entries Info */}
-            {finds.some(find => find.location.latitude === 0 && find.location.longitude === 0) && (
-              <View className="mt-4 pt-3 border-t border-gray-200">
-                <Text className="text-sm text-blue-600 font-medium">
-                  📝 Manual entries available in Recipes section
-                </Text>
-                <Text className="text-xs text-gray-500 mt-1">
-                  Finds logged without GPS don't appear on map
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+              )}
+            </View>
+          )}
+
       </View>
     </SafeAreaView>
   );

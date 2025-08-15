@@ -42,6 +42,7 @@ export interface MapFilter {
   };
   showPrivate: boolean;
   radius: number;
+  inSeasonNow?: boolean; // Only show finds for plants in season for current month
 }
 
 export interface SeasonalSuggestion {

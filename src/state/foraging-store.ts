@@ -57,6 +57,34 @@ interface ForagingState {
   setPresetLogLocation: (location: { latitude: number; longitude: number } | null) => void;
 }
 
+function monthFlagsDefault() {
+  return { jan:false,feb:false,mar:false,apr:false,may:false,jun:false,jul:false,aug:false,sep:false,oct:false,nov:false,dec:false } as const;
+}
+
+function deriveMonthsFromSeasons(seasons: string[] | undefined) {
+  const flags = { ...monthFlagsDefault() } as any;
+  const text = (seasons || []).join(' ').toLowerCase();
+  const set = (months: number[]) => months.forEach(m => {
+    const map = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
+    const key = map[m];
+    (flags as any)[key] = true;
+  });
+  if (/spring/.test(text)) set([2,3,4]);
+  if (/summer/.test(text)) set([5,6,7]);
+  if (/(autumn|fall)/.test(text)) set([8,9,10]);
+  if (/winter/.test(text)) set([11,0,1]);
+  return flags;
+}
+
+function ensureInSeason(plant: Plant): Plant {
+  if (plant.inSeason) return plant;
+  return { ...plant, inSeason: deriveMonthsFromSeasons(plant.identification?.season) };
+}
+
+function withInSeasonDefaults(plants: Plant[]): Plant[] {
+  return plants.map(ensureInSeason);
+}
+
 export const useForagingStore = create<ForagingState>()(
   persist(
     (set, get) => ({
@@ -99,16 +127,16 @@ export const useForagingStore = create<ForagingState>()(
         })),
       
       // Plants
-      plants: defaultPlants,
-      addPlant: (plant) => set((state) => ({ plants: [...state.plants, plant] })),
+      plants: withInSeasonDefaults(defaultPlants),
+      addPlant: (plant) => set((state) => ({ plants: [...state.plants, ensureInSeason(plant)] })),
       updatePlant: (id, updates) =>
         set((state) => ({
           plants: state.plants.map((plant) =>
-            plant.id === id ? { ...plant, ...updates } : plant
+            plant.id === id ? { ...plant, ...ensureInSeason({ ...plant, ...updates }) } : plant
           ),
         })),
       bulkAddPlants: (newPlants) => 
-        set((state) => ({ plants: [...state.plants, ...newPlants] })),
+        set((state) => ({ plants: [...state.plants, ...newPlants.map(ensureInSeason)] })),
       deletePlant: (id) =>
         set((state) => ({
           plants: state.plants.filter((plant) => plant.id !== id),
@@ -131,6 +159,7 @@ export const useForagingStore = create<ForagingState>()(
         },
         showPrivate: true,
         radius: 50,
+        inSeasonNow: false,
       },
       setMapFilter: (filter) =>
         set((state) => ({

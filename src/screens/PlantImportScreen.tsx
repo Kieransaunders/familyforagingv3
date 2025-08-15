@@ -401,6 +401,13 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
                   For fields like keyFeatures, habitat, preparation, etc., separate multiple values with | (pipe)
                 </Text>
               </View>
+
+              <View>
+                <Text className="font-medium text-gray-800 mb-1">In-Season Months:</Text>
+                <Text className="text-sm text-gray-600">
+                  Include optional boolean columns inJan,inFeb,inMar,inApr,inMay,inJun,inJul,inAug,inSep,inOct,inNov,inDec. Values can be true/false/1/0/yes/no.
+                </Text>
+              </View>
             </View>
 
             <View className="bg-gray-50 rounded-lg p-3 mt-4">
