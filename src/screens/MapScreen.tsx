@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, Callout, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useForagingStore } from '../state/foraging-store';
 import { ForagingFind } from '../types/foraging';
 import { getCurrentSeasonSuggestions } from '../data/seasonal-suggestions';
 import { cn } from '../utils/cn';
+import CrossPlatformMap from '../components/CrossPlatformMap';
 
 interface MapScreenProps {
   navigation: any;
 }
 
 export default function MapScreen({ navigation }: MapScreenProps) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -74,12 +74,13 @@ export default function MapScreen({ navigation }: MapScreenProps) {
 
   const centerOnLocation = async () => {
     if (location && mapRef.current) {
-      mapRef.current.animateToRegion({
+      // For WebView-based map, we'll post a message to center the map
+      mapRef.current.postMessage(JSON.stringify({
+        type: 'centerMap',
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
+        zoom: 15
+      }));
     }
   };
 
@@ -101,11 +102,16 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     setMapFilter({ category: newCategories });
   };
 
-  const handleMapPress = (event: MapPressEvent) => {
+  const handleMapPress = (event: any) => {
     if (isPlacingPin) {
-      const { latitude, longitude } = event.nativeEvent.coordinate;
-      setPendingPin({ latitude, longitude });
-      setIsPlacingPin(false);
+      // Handle both web and mobile events
+      const coordinate = event.nativeEvent?.coordinate || event.latlng;
+      if (coordinate) {
+        const latitude = coordinate.latitude || coordinate.lat;
+        const longitude = coordinate.longitude || coordinate.lng;
+        setPendingPin({ latitude, longitude });
+        setIsPlacingPin(false);
+      }
     }
   };
 
@@ -163,10 +169,9 @@ export default function MapScreen({ navigation }: MapScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1">
-        <MapView
-          ref={mapRef}
+        <CrossPlatformMap
+          mapRef={mapRef}
           style={{ flex: 1 }}
-          
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -174,48 +179,29 @@ export default function MapScreen({ navigation }: MapScreenProps) {
             longitudeDelta: 0.01,
           }}
           showsUserLocation
-          showsMyLocationButton={false}
           onPress={handleMapPress}
-        >
-          {filteredFinds.map((find) => (
-            <Marker
-              key={find.id}
-              coordinate={{
+          markers={[
+            ...filteredFinds.map((find) => ({
+              id: find.id,
+              coordinate: {
                 latitude: find.location.latitude,
                 longitude: find.location.longitude,
-              }}
-              pinColor={getCategoryColor(find.category)}
-            >
-              <Callout
-                onPress={() => navigation.navigate('FindDetail', { find })}
-              >
-                <View className="w-48 p-2">
-                  <Text className="font-semibold text-gray-900">{find.name}</Text>
-                  <Text className="text-sm text-gray-600 capitalize">{find.category}</Text>
-                  <Text className="text-xs text-gray-500 mt-1">
-                    {new Date(find.dateFound).toLocaleDateString()}
-                  </Text>
-                  <Text className="text-xs text-blue-600 mt-1">Tap for details</Text>
-                </View>
-              </Callout>
-            </Marker>
-          ))}
-
-          {/* Pending Pin */}
-          {pendingPin && (
-            <Marker
-              coordinate={pendingPin}
-              pinColor="#ff6b6b"
-            >
-              <Callout onPress={confirmPinPlacement}>
-                <View className="w-40 p-2">
-                  <Text className="font-semibold text-gray-900">New Find Location</Text>
-                  <Text className="text-sm text-gray-600">Tap to log find here</Text>
-                </View>
-              </Callout>
-            </Marker>
-          )}
-        </MapView>
+              },
+              title: find.name,
+              description: `${find.category} - ${new Date(find.dateFound).toLocaleDateString()}`,
+              pinColor: getCategoryColor(find.category),
+              onPress: () => navigation.navigate('FindDetail', { find }),
+            })),
+            ...(pendingPin ? [{
+              id: 'pending-pin',
+              coordinate: pendingPin,
+              title: 'New Find Location',
+              description: 'Tap to log find here',
+              pinColor: '#ff6b6b',
+              onPress: confirmPinPlacement,
+            }] : []),
+          ]}
+        />
 
         {/* Manual Finds Badge */}
         {finds.some(find => find.location.latitude === 0 && find.location.longitude === 0) && (
