@@ -15,11 +15,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.mrzang77.familyforaging"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "icon": "./assets/images/icon.png",
+      "package": "com.mrzang77.familyforaging",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
@@ -27,6 +29,12 @@
     },
     "web": {
       "favicon": "./assets/images/icon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ecff25e1-0147-407c-97e0-57253c02562b"
+      }
+    },
+    "owner": "mrzang77"
   }
 }
