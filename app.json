@@ -3,7 +3,7 @@
     "name": "Family Foraging",
     "slug": "family-foraging",
     "scheme": "family-foraging",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -16,16 +16,28 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.mrzang77.familyforaging"
+      "bundleIdentifier": "uk.co.iconnectit.familyforaging",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app uses the camera to help identify plants and foraged items for your foraging journal.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to record where you found foraged items and to help you discover foraging opportunities nearby.",
+        "NSCalendarsUsageDescription": "This app may access calendar data to help organize your foraging activities by season.",
+        "NSContactsUsageDescription": "This app may access contacts to help you share foraging finds and recipes with family and friends."
+      }
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "icon": "./assets/images/icon.png",
-      "package": "com.mrzang77.familyforaging",
+      "package": "uk.co.iconnectit.familyforaging",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -35,6 +47,12 @@
         "projectId": "ecff25e1-0147-407c-97e0-57253c02562b"
       }
     },
-    "owner": "mrzang77"
+    "owner": "mrzang77",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ecff25e1-0147-407c-97e0-57253c02562b"
+    }
   }
 }
