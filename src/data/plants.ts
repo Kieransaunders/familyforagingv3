@@ -11,6 +11,7 @@ export type PlantDatabase = {
   edibility: { safe: boolean; preparation: string[]; warnings?: string[] };
   uses: { culinary: string[]; medicinal: string[]; recipes: string[] };
   ethics: string[];
+  bestMonths: number[]; // Array of month numbers (1-12) when this plant is in season
 };
 
 // Comprehensive plant database with 30+ plants organized by season
@@ -21,7 +22,7 @@ export const PLANTS: PlantDatabase[] = [
     name: "Nettle",
     latinName: "Urtica dioica",
     category: "leaves",
-    heroImage: "/images/plants/nettle.jpg",
+    heroImage: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400",
     identification: [
       "Stinging hairs on stems and leaves",
       "Opposite, serrated leaves",
@@ -38,13 +39,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["nettle-soup", "nettle-pesto"],
     },
     ethics: ["Harvest young tops only", "Leave plenty for wildlife (e.g., butterflies)"],
+    bestMonths: [3, 4, 5, 6], // March through June - best when young
   },
   {
     id: "dandelion-db",
     name: "Dandelion",
     latinName: "Taraxacum officinale",
     category: "leaves",
-    heroImage: "/images/plants/dandelion.jpg",
+    heroImage: "https://images.unsplash.com/photo-1525440947054-5e81d6443c76?w=400",
     identification: [
       "Basal rosette of jagged leaves",
       "Hollow stems with milky sap",
@@ -65,13 +67,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["dandelion-salad", "dandelion-coffee", "dandelion-syrup"],
     },
     ethics: ["Common, but still avoid over-harvesting roots in small patches"],
+    bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September - young leaves best in spring
   },
   {
     id: "wild-garlic-db",
     name: "Wild Garlic",
     latinName: "Allium ursinum",
     category: "leaves",
-    heroImage: "/images/plants/wild-garlic.jpg",
+    heroImage: "https://images.unsplash.com/photo-1587411768521-eba3d1d45e2b?w=400",
     identification: [
       "Strong garlic smell when crushed",
       "Broad, soft leaves; white starry flowers",
@@ -88,13 +91,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["wild-garlic-pesto", "wild-garlic-butter"],
     },
     ethics: ["Pick leaves sparingly; never uproot bulbs in protected areas"],
+    bestMonths: [3, 4, 5], // March, April, May - prime wild garlic season
   },
   {
     id: "goosefoot",
     name: "Goosefoot",
     latinName: "Chenopodium album",
     category: "leaves",
-    heroImage: "/images/plants/goosefoot.jpg",
+    heroImage: "https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?w=400",
     identification: [
       "Diamond/triangular leaves with mealy coating",
       "Erect, branching stems",
@@ -111,13 +115,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["goosefoot-greens"],
     },
     ethics: ["Abundant weed; still avoid stripping entire plants"],
+    bestMonths: [4, 5, 6, 7, 8], // April through August - young shoots
   },
   {
     id: "chickweed",
     name: "Chickweed",
     latinName: "Stellaria media",
     category: "leaves",
-    heroImage: "/images/plants/chickweed.jpg",
+    heroImage: "https://images.unsplash.com/photo-1586450360903-6a6c2e7ff68f?w=400",
     identification: [
       "Single line of hairs along the stem",
       "Opposite small leaves",
@@ -133,13 +138,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["chickweed-salad"],
     },
     ethics: ["Very common; harvest lightly from each patch"],
+    bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September
   },
   {
     id: "spearmint",
     name: "Spearmint",
     latinName: "Mentha spicata",
     category: "leaves",
-    heroImage: "/images/plants/spearmint.jpg",
+    heroImage: "https://images.unsplash.com/photo-1618016922350-8c6d9b4a0aec?w=400",
     identification: [
       "Square stems (mint family)",
       "Opposite toothed leaves with mint aroma",
@@ -155,13 +161,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["mint-tea", "mint-yogurt-sauce"],
     },
     ethics: ["Invasive; careful garden management, but wild patches still share responsibly"],
+    bestMonths: [4, 5, 6, 7, 8, 9], // April through September
   },
   {
     id: "plantain",
     name: "Plantain",
     latinName: "Plantago major",
     category: "leaves",
-    heroImage: "/images/plants/plantain.jpg",
+    heroImage: "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=400",
     identification: [
       "Broad leaves with parallel veins",
       "Low rosette habit",
@@ -177,6 +184,7 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["plantain-greens"],
     },
     ethics: ["Common lawn 'weed'; pick clean, unpolluted areas only"],
+    bestMonths: [4, 5, 6, 7, 8, 9], // April through September
   },
 
   // --- SUMMER ---
@@ -185,7 +193,7 @@ export const PLANTS: PlantDatabase[] = [
     name: "Wild Cherry",
     latinName: "Prunus avium",
     category: "berries",
-    heroImage: "/images/plants/wild-cherry.jpg",
+    heroImage: "https://cdn.pixabay.com/photo/2018/06/03/21/42/cherry-3451876_960_720.jpg",
     identification: [
       "Shiny bark with horizontal lenticels",
       "Clusters of white spring flowers",
@@ -202,13 +210,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["wild-cherry-jam"],
     },
     ethics: ["Leave plenty for birds and other wildlife"],
+    bestMonths: [6, 7], // June, July - early summer cherries
   },
   {
     id: "elder-db",
     name: "Elder",
     latinName: "Sambucus nigra",
     category: "berries",
-    heroImage: "/images/plants/elder.jpg",
+    heroImage: "https://images.unsplash.com/photo-1564419434-b08e21e37342?w=400",
     identification: [
       "Umbels of white flowers in early summer",
       "Purple-black berry clusters",
@@ -225,13 +234,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["elderflower-cordial", "elderberry-syrup"],
     },
     ethics: ["Take small amounts of flowers so berries still form"],
+    bestMonths: [5, 6, 7, 8, 9], // May-July for flowers, August-September for berries
   },
   {
     id: "bilberry",
     name: "Bilberry",
     latinName: "Vaccinium myrtillus",
     category: "berries",
-    heroImage: "/images/plants/bilberry.jpg",
+    heroImage: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400",
     identification: [
       "Low shrub with solitary berries",
       "Deep blue berries that stain hands/teeth",
@@ -247,13 +257,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["bilberry-jam"],
     },
     ethics: ["Slow-growing habitats — pick lightly"],
+    bestMonths: [7, 8, 9], // July through September
   },
   {
     id: "marsh-samphire",
     name: "Marsh Samphire",
     latinName: "Salicornia europaea",
     category: "leaves",
-    heroImage: "/images/plants/marsh-samphire.jpg",
+    heroImage: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400",
     identification: [
       "Fleshy, jointed succulent stems",
       "Coastal saltmarshes",
@@ -270,13 +281,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["samphire-butter"],
     },
     ethics: ["Harvest sparingly; sensitive coastal ecosystems"],
+    bestMonths: [7, 8, 9], // July through September
   },
   {
     id: "common-sorrel",
     name: "Common Sorrel",
     latinName: "Rumex acetosa",
     category: "leaves",
-    heroImage: "/images/plants/common-sorrel.jpg",
+    heroImage: "https://images.unsplash.com/photo-1551835491-3d5c2b6de55d?w=400",
     identification: [
       "Arrow-shaped leaves with backward-pointing lobes",
       "Sour, lemony taste",
@@ -293,13 +305,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["sorrel-soup"],
     },
     ethics: ["Widespread, but rotate patches"],
+    bestMonths: [4, 5, 6, 7, 8], // April through August
   },
   {
     id: "giant-puffball",
     name: "Giant Puffball",
     latinName: "Calvatia gigantea",
     category: "mushrooms",
-    heroImage: "/images/plants/giant-puffball.jpg",
+    heroImage: "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=400",
     identification: [
       "Large white ball, often football-sized",
       "Pure white flesh when edible",
@@ -316,13 +329,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["puffball-steaks"],
     },
     ethics: ["Take only a portion; leave some to spore"],
+    bestMonths: [6, 7, 8, 9, 10], // June through October
   },
   {
     id: "wild-radish",
     name: "Wild Radish",
     latinName: "Raphanus raphanistrum",
     category: "roots",
-    heroImage: "/images/plants/wild-radish.jpg",
+    heroImage: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400",
     identification: [
       "Pale yellow to lilac 4-petaled flowers",
       "Hairy stems and leaves",
@@ -339,13 +353,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["pickled-radish-pods"],
     },
     ethics: ["Common weed; still harvest mindfully"],
+    bestMonths: [4, 5, 6, 7, 8], // April through August
   },
   {
     id: "woodland-strawberry",
     name: "Woodland Strawberry",
     latinName: "Fragaria vesca",
     category: "berries",
-    heroImage: "/images/plants/woodland-strawberry.jpg",
+    heroImage: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400",
     identification: [
       "Three leaflets per leaf",
       "Small, intensely flavoured berries",
@@ -361,13 +376,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["wild-strawberry-compote"],
     },
     ethics: ["Tiny berries — take sparingly"],
+    bestMonths: [6, 7, 8], // June through August
   },
   {
     id: "wild-plum",
     name: "Wild Plum",
     latinName: "Prunus domestica subsp. insititia",
     category: "berries",
-    heroImage: "/images/plants/wild-plum.jpg",
+    heroImage: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
     identification: [
       "Small plum or bullace fruits",
       "Thorny hedgerows",
@@ -384,13 +400,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["wild-plum-jam"],
     },
     ethics: ["Share with wildlife; avoid stripping hedgerows"],
+    bestMonths: [7, 8, 9], // July through September
   },
   {
     id: "blackberry-db",
     name: "Blackberry",
     latinName: "Rubus fruticosus agg.",
     category: "berries",
-    heroImage: "/images/plants/blackberry.jpg",
+    heroImage: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400",
     identification: [
       "Arching brambles with thorns",
       "Palmate leaves, white/pink flowers",
@@ -406,6 +423,7 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["blackberry-crumble", "blackberry-jam"],
     },
     ethics: ["Leave plenty for wildlife, don't trample habitats"],
+    bestMonths: [8, 9, 10], // August through October
   },
 
   // --- AUTUMN / FALL ---
@@ -414,7 +432,7 @@ export const PLANTS: PlantDatabase[] = [
     name: "Apple",
     latinName: "Malus domestica (incl. wildings)",
     category: "berries",
-    heroImage: "/images/plants/apple.jpg",
+    heroImage: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
     identification: [
       "Tree with serrated, oval leaves",
       "White/pink blossom in spring",
@@ -430,13 +448,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["apple-crumble", "apple-cider"],
     },
     ethics: ["Forage windfalls; ask permission from private orchards"],
+    bestMonths: [8, 9, 10, 11], // August through November
   },
   {
     id: "rose-hips",
     name: "Rose (Hips)",
     latinName: "Rosa canina (typical)",
     category: "berries",
-    heroImage: "/images/plants/rose-hips.jpg",
+    heroImage: "https://cdn.pixabay.com/photo/2016/09/29/14/19/rose-hips-1702982_960_720.jpg",
     identification: [
       "Shrub with curved thorns",
       "Pinnate leaves",
@@ -453,13 +472,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["rose-hip-syrup"],
     },
     ethics: ["Don't overharvest — wildlife relies on hips over winter"],
+    bestMonths: [9, 10, 11], // September through November
   },
   {
     id: "hawthorn",
     name: "Hawthorn",
     latinName: "Crataegus monogyna",
     category: "berries",
-    heroImage: "/images/plants/hawthorn.jpg",
+    heroImage: "https://images.unsplash.com/photo-1598735948212-8519e3d83353?w=400",
     identification: [
       "Deeply lobed leaves",
       "White blossom in May",
@@ -475,13 +495,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["hawthorn-ketchup"],
     },
     ethics: ["Leave plenty for birds"],
+    bestMonths: [9, 10, 11], // September through November
   },
   {
     id: "raspberry",
     name: "Raspberry",
     latinName: "Rubus idaeus",
     category: "berries",
-    heroImage: "/images/plants/raspberry.jpg",
+    heroImage: "https://images.unsplash.com/photo-1566907820464-5e0e087de2e8?w=400",
     identification: [
       "Erect canes, often thorny",
       "Palmate, serrated leaves",
@@ -497,13 +518,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["raspberry-jam"],
     },
     ethics: ["Cultivated and wild; respect private land"],
+    bestMonths: [6, 7, 8, 9], // June through September
   },
   {
     id: "beech",
     name: "Beech",
     latinName: "Fagus sylvatica",
     category: "nuts",
-    heroImage: "/images/plants/beech.jpg",
+    heroImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
     identification: [
       "Smooth grey bark",
       "Wavy-edged leaves with silky hairs when young",
@@ -520,13 +542,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["roasted-beechnuts"],
     },
     ethics: ["Collect windfalls; don't damage trees"],
+    bestMonths: [9, 10], // September, October
   },
   {
     id: "cep",
     name: "Cep / Porcini",
     latinName: "Boletus edulis",
     category: "mushrooms",
-    heroImage: "/images/plants/cep.jpg",
+    heroImage: "https://images.unsplash.com/photo-1504970446340-5bd4d5c1d75c?w=400",
     identification: [
       "Thick, white stalk with netted pattern",
       "Brown cap, sponge-like pores (not gills)",
@@ -543,13 +566,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["porcini-risotto"],
     },
     ethics: ["Cut, don't rake; leave small/old specimens"],
+    bestMonths: [8, 9, 10, 11], // August through November
   },
   {
     id: "hazelnut",
     name: "Hazelnut",
     latinName: "Corylus avellana",
     category: "nuts",
-    heroImage: "/images/plants/hazelnut.jpg",
+    heroImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
     identification: [
       "Multi-stemmed shrub",
       "Rounded, toothed leaves",
@@ -565,13 +589,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["roasted-hazelnuts"],
     },
     ethics: ["Take modestly; key wildlife food"],
+    bestMonths: [9, 10], // September, October
   },
   {
     id: "sweet-chestnut",
     name: "Sweet Chestnut",
     latinName: "Castanea sativa",
     category: "nuts",
-    heroImage: "/images/plants/sweet-chestnut.jpg",
+    heroImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
     identification: [
       "Long, serrated leaves",
       "Large spiky burs with 1–3 nuts",
@@ -587,13 +612,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["roasted-chestnuts"],
     },
     ethics: ["Gather windfalls; avoid damaging burs/branches"],
+    bestMonths: [9, 10, 11], // September through November
   },
   {
     id: "staghorn-sumac",
     name: "Staghorn Sumac",
     latinName: "Rhus typhina",
     category: "berries",
-    heroImage: "/images/plants/staghorn-sumac.jpg",
+    heroImage: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400",
     identification: [
       "Velvety, antler-like young branches",
       "Large pinnate leaves turning red",
@@ -610,6 +636,7 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["sumac-lemonade"],
     },
     ethics: ["Often ornamental/invasive — still harvest responsibly"],
+    bestMonths: [8, 9, 10], // August through October
   },
 
   // --- WINTER ---
@@ -618,7 +645,7 @@ export const PLANTS: PlantDatabase[] = [
     name: "Wood Sorrel",
     latinName: "Oxalis acetosella",
     category: "leaves",
-    heroImage: "/images/plants/wood-sorrel.jpg",
+    heroImage: "https://images.unsplash.com/photo-1520637836862-4d197d17c89a?w=400",
     identification: [
       "Shamrock-like trifoliate leaves",
       "Tangy, lemony taste",
@@ -635,13 +662,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["wood-sorrel-garnish"],
     },
     ethics: ["Small plants — take very lightly"],
+    bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September, available most of year
   },
   {
     id: "sea-beet",
     name: "Sea Beet",
     latinName: "Beta vulgaris subsp. maritima",
     category: "leaves",
-    heroImage: "/images/plants/sea-beet.jpg",
+    heroImage: "https://picsum.photos/400/300?random=1",
     identification: [
       "Thick, glossy, dark green leaves",
       "Coastal shingle and cliffs",
@@ -658,13 +686,14 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["sea-beet-greens"],
     },
     ethics: ["Coastal plants can be sparse — pick minimally"],
+    bestMonths: [5, 6, 7, 8, 9, 10], // May through October
   },
   {
     id: "birch",
     name: "Birch",
     latinName: "Betula pendula",
     category: "leaves",
-    heroImage: "/images/plants/birch.jpg",
+    heroImage: "https://images.unsplash.com/photo-1516406080161-8b3f8f2b3d94?w=400",
     identification: [
       "White peeling bark with black fissures",
       "Triangular serrated leaves",
@@ -681,6 +710,7 @@ export const PLANTS: PlantDatabase[] = [
       recipes: ["birch-sap-wine"],
     },
     ethics: ["If tapping, 1 small tap per healthy tree; seal afterwards"],
+    bestMonths: [3, 4], // March, April for sap, year-round for leaves
   },
 ];
 
@@ -1040,4 +1070,101 @@ export const searchPlants = (query: string): Plant[] => {
       feature.toLowerCase().includes(searchTerm)
     )
   );
+};
+
+// Seasonal plant functions for LogFindScreen
+export const getSeasonalPlantsFromDatabase = (month: number): PlantDatabase[] => {
+  return PLANTS.filter(plant => 
+    plant.bestMonths.includes(month)
+  );
+};
+
+export const getCurrentSeasonalPlantsFromDatabase = (): PlantDatabase[] => {
+  const currentMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, we need 1-12
+  return getSeasonalPlantsFromDatabase(currentMonth);
+};
+
+// Convert PlantDatabase to SeasonalSuggestion format for compatibility
+export const getSeasonalSuggestionsFromDatabase = (month: number) => {
+  const seasonalPlants = getSeasonalPlantsFromDatabase(month);
+  return seasonalPlants.map(plant => ({
+    name: plant.name,
+    category: plant.category,
+    description: plant.identification[0] || '', // Use first identification point as description
+    bestMonths: plant.bestMonths,
+    habitat: plant.identification.find(id => id.toLowerCase().includes('soil') || id.toLowerCase().includes('woodland') || id.toLowerCase().includes('meadow') || id.toLowerCase().includes('coastal')) || 'Various habitats',
+    identificationTips: plant.identification
+  }));
+};
+
+export const getCurrentSeasonalSuggestionsFromDatabase = () => {
+  const currentMonth = new Date().getMonth() + 1;
+  return getSeasonalSuggestionsFromDatabase(currentMonth);
+};
+
+// Convert PlantDatabase to Plant format for compatibility
+export const convertPlantDatabaseToPlant = (plantDb: PlantDatabase): Plant => {
+  // Convert bestMonths to inSeason flags
+  const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
+  const inSeason: any = {};
+  monthKeys.forEach((month, index) => {
+    inSeason[month] = plantDb.bestMonths.includes(index + 1);
+  });
+
+  // Map category from PlantDatabase to Plant
+  const categoryMapping: { [key in PlantDatabase['category']]: Plant['category'] } = {
+    'berries': 'berries',
+    'leaves': 'leaves', 
+    'nuts': 'nuts',
+    'mushrooms': 'mushrooms',
+    'flowers': 'flowers',
+    'roots': 'roots'
+  };
+
+  // Derive season from bestMonths
+  const seasons: string[] = [];
+  if (plantDb.bestMonths.some(m => [3, 4, 5].includes(m))) seasons.push('Spring');
+  if (plantDb.bestMonths.some(m => [6, 7, 8].includes(m))) seasons.push('Summer');
+  if (plantDb.bestMonths.some(m => [9, 10, 11].includes(m))) seasons.push('Early Fall');
+  if (plantDb.bestMonths.some(m => [12, 1, 2].includes(m))) seasons.push('Winter');
+
+  return {
+    id: plantDb.id,
+    name: plantDb.name,
+    latinName: plantDb.latinName,
+    family: 'Unknown', // PlantDatabase doesn't have family, use default
+    category: categoryMapping[plantDb.category],
+    heroImage: plantDb.heroImage,
+    images: [plantDb.heroImage],
+    identification: {
+      keyFeatures: plantDb.identification,
+      habitat: [plantDb.identification.find(id => 
+        id.toLowerCase().includes('soil') || 
+        id.toLowerCase().includes('woodland') || 
+        id.toLowerCase().includes('meadow') || 
+        id.toLowerCase().includes('coastal') ||
+        id.toLowerCase().includes('hedge') ||
+        id.toLowerCase().includes('waste')
+      ) || 'Various habitats'],
+      season: seasons,
+      lookAlikes: [], // PlantDatabase doesn't have this field
+      size: 'Unknown' // PlantDatabase doesn't have this field
+    },
+    edibility: plantDb.edibility,
+    uses: {
+      culinary: plantDb.uses.culinary,
+      medicinal: plantDb.uses.medicinal,
+      traditional: [], // PlantDatabase doesn't have this field
+      recipes: plantDb.uses.recipes
+    },
+    ethics: plantDb.ethics,
+    funFacts: '', // PlantDatabase doesn't have this field
+    conservationStatus: 'common' as Plant['conservationStatus'],
+    inSeason
+  };
+};
+
+// Convert all PLANTS to Plant format
+export const getPlantsFromDatabase = (): Plant[] => {
+  return PLANTS.map(convertPlantDatabaseToPlant);
 };

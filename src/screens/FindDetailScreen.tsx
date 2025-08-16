@@ -311,15 +311,33 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
                   </Text>
                 </View>
                 
-                <Pressable
-                  onPress={openInMaps}
-                  className="bg-blue-500 py-3 rounded-xl flex-row items-center justify-center"
-                >
-                  <Ionicons name="map" size={18} color="white" />
-                  <Text className="text-white font-bold ml-2">
-                    Open in Maps
-                  </Text>
-                </Pressable>
+                <View className="flex-row gap-3">
+                  <Pressable
+                    onPress={() => {
+                      // Navigate to internal map and set focused find
+                      const tabNavigation = navigation.getParent();
+                      const { setFocusedFind } = useForagingStore.getState();
+                      setFocusedFind(find);
+                      tabNavigation?.navigate('Map');
+                    }}
+                    className="flex-1 bg-green-500 py-3 rounded-xl flex-row items-center justify-center"
+                  >
+                    <Ionicons name="location" size={18} color="white" />
+                    <Text className="text-white font-bold ml-2">
+                      View on Map
+                    </Text>
+                  </Pressable>
+                  
+                  <Pressable
+                    onPress={openInMaps}
+                    className="flex-1 bg-blue-500 py-3 rounded-xl flex-row items-center justify-center"
+                  >
+                    <Ionicons name="map" size={18} color="white" />
+                    <Text className="text-white font-bold ml-2">
+                      Open in Maps
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           )}

@@ -146,7 +146,7 @@ function MyFindsStack() {
         name="LogFind" 
         component={LogFindScreen} 
         options={({ route }) => ({ 
-          title: route.params?.editFind ? 'Edit Find' : 'Log Find',
+          title: (route.params as any)?.editFind ? 'Edit Find' : 'Log Find',
           presentation: 'modal',
         })} 
       />

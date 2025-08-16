@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ForagingFind, Recipe, MapFilter } from '../types/foraging';
 import { Plant } from '../types/plant';
-import { plants as defaultPlants } from '../data/plants';
+import { getPlantsFromDatabase } from '../data/plants';
 
 interface ForagingState {
   // Finds
@@ -55,6 +55,10 @@ interface ForagingState {
     longitude: number;
   } | null;
   setPresetLogLocation: (location: { latitude: number; longitude: number } | null) => void;
+  
+  // Focused find for map navigation
+  focusedFind: ForagingFind | null;
+  setFocusedFind: (find: ForagingFind | null) => void;
 }
 
 function monthFlagsDefault() {
@@ -127,7 +131,7 @@ export const useForagingStore = create<ForagingState>()(
         })),
       
       // Plants
-      plants: withInSeasonDefaults(defaultPlants),
+      plants: withInSeasonDefaults(getPlantsFromDatabase()),
       addPlant: (plant) => set((state) => ({ plants: [...state.plants, ensureInSeason(plant)] })),
       updatePlant: (id, updates) =>
         set((state) => ({
@@ -181,9 +185,14 @@ export const useForagingStore = create<ForagingState>()(
       // Preset location for logging
       presetLogLocation: null,
       setPresetLogLocation: (location) => set({ presetLogLocation: location }),
+      
+      // Focused find for map navigation
+      focusedFind: null,
+      setFocusedFind: (find) => set({ focusedFind: find }),
     }),
     {
       name: 'foraging-store',
+      version: 2, // Increment to force cache invalidation and load new plant database
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         finds: state.finds,

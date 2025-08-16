@@ -13,9 +13,8 @@ interface RecipeScreenProps {
 export default function RecipeScreen({ navigation }: RecipeScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSeason, setSelectedSeason] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   
-  const { recipes, favoriteRecipes, toggleFavoriteRecipe, finds } = useForagingStore();
+  const { recipes, favoriteRecipes, toggleFavoriteRecipe, finds, searchQuery, setSearchQuery } = useForagingStore();
 
   const categories = ['all', 'drinks', 'meals', 'preserves', 'medicinal'];
   const seasons = ['all', 'spring', 'summer', 'autumn', 'winter'];
@@ -161,9 +160,17 @@ export default function RecipeScreen({ navigation }: RecipeScreenProps) {
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search recipes, ingredients..."
-              className="bg-white rounded-xl pl-10 pr-4 py-3 text-gray-900 shadow-sm"
+              className="bg-white rounded-xl pl-10 pr-10 py-3 text-gray-900 shadow-sm"
               placeholderTextColor="#9ca3af"
             />
+            {searchQuery.length > 0 && (
+              <Pressable
+                onPress={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: 12, top: 12, zIndex: 1 }}
+              >
+                <Ionicons name="close-circle" size={20} color="#6b7280" />
+              </Pressable>
+            )}
           </View>
 
           {/* Action Buttons */}
@@ -274,23 +281,47 @@ export default function RecipeScreen({ navigation }: RecipeScreenProps) {
             </View>
           )}
 
+          {/* Search Results Header */}
+          {searchQuery && (
+            <View className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+              <Text className="text-green-800 font-medium">
+                🌿 Searching for recipes with "{searchQuery}"
+              </Text>
+              {filteredRecipes.length > 0 && (
+                <Text className="text-green-700 text-sm">
+                  Found {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''}
+                </Text>
+              )}
+            </View>
+          )}
+
           {/* Recipe List */}
           {filteredRecipes.length > 0 ? (
             <>
-              <Text className="text-gray-600 text-sm mb-4">
-                {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
-              </Text>
+              {!searchQuery && (
+                <Text className="text-gray-600 text-sm mb-4">
+                  {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
+                </Text>
+              )}
               {filteredRecipes.map(renderRecipeCard)}
             </>
           ) : (
             <View className="flex-1 justify-center items-center py-12">
               <Ionicons name="book-outline" size={48} color="#d1d5db" />
               <Text className="text-gray-500 text-lg font-medium mt-4">
-                No recipes found
+                {searchQuery ? `No recipes found for "${searchQuery}"` : 'No recipes found'}
               </Text>
-              <Text className="text-gray-400 text-center mt-2">
-                Try adjusting your filters or search terms
+              <Text className="text-gray-400 text-center mt-2 mb-4">
+                {searchQuery ? 'Try a different plant name or check the spelling' : 'Try adjusting your filters or search terms'}
               </Text>
+              {searchQuery && (
+                <Pressable
+                  onPress={() => setSearchQuery('')}
+                  className="bg-blue-500 px-4 py-2 rounded-lg"
+                >
+                  <Text className="text-white font-medium">Clear Search</Text>
+                </Pressable>
+              )}
             </View>
           )}
           

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, CameraType, useCameraPermissions, CameraViewRef } from 'expo-camera';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 
@@ -14,7 +14,7 @@ export default function CameraScreen({ navigation, route }: CameraScreenProps) {
   const [facing, setFacing] = useState<CameraType>('back');
   const [flash, setFlash] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraViewRef>(null);
+  const cameraRef = useRef<CameraView>(null);
 
   const { onPhotoTaken } = route.params || {};
 
@@ -54,7 +54,7 @@ export default function CameraScreen({ navigation, route }: CameraScreenProps) {
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
-        const photo = await cameraRef.current.takePictureAsync({
+        const photo = await (cameraRef.current as any).takePictureAsync({
           quality: 0.8,
           base64: false,
         });

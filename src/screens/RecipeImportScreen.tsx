@@ -65,7 +65,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
         setDuplicateConflicts(conflicts);
       }
     } catch (error) {
-      Alert.alert('Error', `Failed to read file: ${error.message}`);
+      Alert.alert('Error', `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -85,7 +85,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
         Alert.alert('Template Generated', `Template saved to: ${fileUri}`);
       }
     } catch (error) {
-      Alert.alert('Error', `Failed to generate template: ${error.message}`);
+      Alert.alert('Error', `Failed to generate template: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -152,7 +152,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
       );
 
     } catch (error) {
-      Alert.alert('Import Error', `Failed to import recipes: ${error.message}`);
+      Alert.alert('Import Error', `Failed to import recipes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsImporting(false);
     }

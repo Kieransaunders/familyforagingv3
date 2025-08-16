@@ -13,7 +13,7 @@ interface PlantDetailScreenProps {
 
 export default function PlantDetailScreen({ navigation, route }: PlantDetailScreenProps) {
   const { plantId } = route.params;
-  const { plants, updatePlant } = useForagingStore();
+  const { plants, updatePlant, deletePlant } = useForagingStore();
   const plant = useMemo(() => plants.find(p => p.id === plantId), [plants, plantId]);
   const [expandedSections, setExpandedSections] = useState<string[]>(['identification']);
   const [isEditing, setIsEditing] = useState(false);
@@ -54,11 +54,36 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
       params: { 
         prefilledData: {
           name: plant.name,
-          category: plant.category,
+          category: plant.category === 'berries' ? 'berry' : 
+                   plant.category === 'leaves' ? 'herb' :
+                   plant.category === 'nuts' ? 'nut' :
+                   plant.category === 'mushrooms' ? 'fungi' :
+                   plant.category === 'flowers' ? 'plant' :
+                   plant.category === 'roots' ? 'herb' : 'plant',
           notes: `Identified as ${plant.name} (${plant.latinName}) from Plant Database`
         }
       }
     });
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Plant',
+      `Are you sure you want to delete ${plant.name}? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: () => {
+            deletePlant(plant.id);
+            Alert.alert('Success', 'Plant deleted successfully', [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
+          }
+        }
+      ]
+    );
   };
 
   const getCategoryColor = (category: string) => {
@@ -155,7 +180,13 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
           </Pressable>
           
           <Pressable
-            onPress={() => Alert.alert('View Recipes', 'Feature coming soon!')}
+            onPress={() => {
+              // Navigate to recipes tab and search for this plant
+              const { setSearchQuery } = useForagingStore.getState();
+              setSearchQuery(plant.name);
+              const tabNavigation = navigation.getParent();
+              tabNavigation?.navigate('Recipes');
+            }}
             className="flex-1 bg-blue-500 rounded-xl py-3 flex-row items-center justify-center"
           >
             <Ionicons name="restaurant" size={20} color="white" />
@@ -167,6 +198,13 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
             className="w-12 bg-gray-800 rounded-xl items-center justify-center"
           >
             <Ionicons name={isEditing ? 'close' : 'create'} size={20} color="white" />
+          </Pressable>
+
+          <Pressable
+            onPress={handleDelete}
+            className="w-12 bg-red-500 rounded-xl items-center justify-center"
+          >
+            <Ionicons name="trash" size={20} color="white" />
           </Pressable>
         </View>
 

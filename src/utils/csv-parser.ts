@@ -97,12 +97,12 @@ export function parseCSVToRecipes(csvContent: string): CSVParseResult {
           result.successfulRows++;
         }
       } catch (error) {
-        result.errors.push(`Row ${rowNumber}: ${error.message}`);
+        result.errors.push(`Row ${rowNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
 
   } catch (error) {
-    result.errors.push(`Failed to parse CSV: ${error.message}`);
+    result.errors.push(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
   return result;

@@ -12,10 +12,10 @@ interface MyFindsScreenProps {
 }
 
 export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
-  const { finds, recipes } = useForagingStore();
+  const { finds, recipes, setSearchQuery: setGlobalSearchQuery } = useForagingStore();
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'category'>('date');
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
   const categories = [
@@ -34,9 +34,9 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
       const categoryMatch = filterCategory === 'all' || find.category === filterCategory;
       
       // Search filter
-      const searchMatch = !searchQuery || 
-        find.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (find.notes && find.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+      const searchMatch = !localSearchQuery || 
+        find.name.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
+        (find.notes && find.notes.toLowerCase().includes(localSearchQuery.toLowerCase()));
       
       return categoryMatch && searchMatch;
     })
@@ -114,12 +114,17 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                 <Pressable 
                   onPress={(e) => {
                     e.stopPropagation();
-                    navigation.navigate('Recipes');
+                    // Navigate to recipes tab and search for this find
+                    setGlobalSearchQuery(find.name);
+                    const tabNavigation = navigation.getParent();
+                    tabNavigation?.navigate('Recipes');
                   }}
                   className="bg-orange-100 px-2 py-1 rounded-full flex-row items-center"
                 >
                   <Ionicons name="restaurant" size={12} color="#ea580c" />
-                  <Text className="text-xs font-medium text-orange-700 ml-1">Recipe</Text>
+                  <Text className="text-xs font-medium text-orange-700 ml-1">
+                    {relatedRecipes.length} Recipe{relatedRecipes.length > 1 ? 's' : ''}
+                  </Text>
                 </Pressable>
               )}
 
@@ -163,12 +168,32 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
             </Text>
           </View>
           
-          <View className="flex-row items-center">
+          <View className="flex-row items-center gap-2">
+            {/* Recipe Search Button */}
+            <Pressable 
+              onPress={(e) => {
+                e.stopPropagation();
+                // Navigate to recipes tab and search for this find
+                setGlobalSearchQuery(find.name);
+                const tabNavigation = navigation.getParent();
+                tabNavigation?.navigate('Recipes');
+              }}
+              className="flex-row items-center bg-blue-100 px-3 py-1 rounded-full"
+            >
+              <Ionicons name="restaurant" size={12} color="#3b82f6" />
+              <Text className="text-xs font-bold text-blue-700 ml-1">Find Recipes</Text>
+            </Pressable>
+
+            {/* Location Button */}
             {find.location.latitude !== 0 && find.location.longitude !== 0 ? (
               <Pressable 
                 onPress={(e) => {
                   e.stopPropagation();
-                  navigation.navigate('Map');
+                  // Get the parent tab navigator and set the focused find
+                  const tabNavigation = navigation.getParent();
+                  const { setFocusedFind } = useForagingStore.getState();
+                  setFocusedFind(find);
+                  tabNavigation?.navigate('Map');
                 }}
                 className="flex-row items-center bg-green-100 px-3 py-1 rounded-full"
               >
@@ -207,14 +232,14 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
             <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3 mb-4">
               <Ionicons name="search" size={16} color="#6b7280" />
               <TextInput
-                value={searchQuery}
-                onChangeText={setSearchQuery}
+                value={localSearchQuery}
+                onChangeText={setLocalSearchQuery}
                 placeholder="Search finds..."
                 className="flex-1 ml-2 text-gray-900"
                 autoFocus
               />
-              {searchQuery.length > 0 && (
-                <Pressable onPress={() => setSearchQuery('')}>
+              {localSearchQuery.length > 0 && (
+                <Pressable onPress={() => setLocalSearchQuery('')}>
                   <Ionicons name="close-circle" size={16} color="#6b7280" />
                 </Pressable>
               )}
@@ -373,7 +398,7 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                   <Pressable 
                     onPress={() => {
                       setFilterCategory('all');
-                      setSearchQuery('');
+                      setLocalSearchQuery('');
                       setShowSearch(false);
                     }}
                     className="bg-gray-100 px-4 py-2 rounded-full"
@@ -389,14 +414,14 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                 <Text className="text-sm font-medium text-gray-600">
                   {filteredFinds.length} find{filteredFinds.length !== 1 ? 's' : ''}
                   {filterCategory !== 'all' && ` in ${categories.find(c => c.key === filterCategory)?.label.toLowerCase()}`}
-                  {searchQuery && ` matching "${searchQuery}"`}
+                  {localSearchQuery && ` matching "${localSearchQuery}"`}
                 </Text>
                 
                 {finds.length > filteredFinds.length && (
                   <Pressable 
                     onPress={() => {
                       setFilterCategory('all');
-                      setSearchQuery('');
+                      setLocalSearchQuery('');
                       setShowSearch(false);
                     }}
                     className="px-2 py-1 rounded-full bg-gray-100"
