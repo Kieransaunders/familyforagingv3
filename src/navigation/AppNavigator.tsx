@@ -233,9 +233,9 @@ function TabNavigatorWithHeader() {
           },
         })}
       >
+        <Tab.Screen name="My Finds" component={MyFindsStack} />
         <Tab.Screen name="Map" component={MapStack} />
         <Tab.Screen name="Recipes" component={RecipeStack} />
-        <Tab.Screen name="My Finds" component={MyFindsStack} />
         <Tab.Screen name="Plants" component={PlantStack} />
       </Tab.Navigator>
       <AppHeader />

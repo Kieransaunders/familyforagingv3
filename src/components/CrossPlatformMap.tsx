@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Platform, View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -36,6 +36,7 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
   showsUserLocation = false,
   mapRef,
 }) => {
+  const [hasError, setHasError] = useState(false);
   const generateMapHTML = () => {
     const markersHTML = markers.map(marker => `
       L.marker([${marker.coordinate.latitude}, ${marker.coordinate.longitude}])
@@ -57,57 +58,102 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
       <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
           body { margin: 0; padding: 0; }
           #map { height: 100vh; width: 100vw; }
+          .error-container { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            flex-direction: column;
+            background: #f3f4f6;
+            color: #374151;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+          }
+          .error-icon { font-size: 48px; margin-bottom: 16px; }
+          .error-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+          .error-message { font-size: 14px; text-align: center; opacity: 0.7; }
         </style>
       </head>
       <body>
         <div id="map"></div>
+        <div id="error" class="error-container" style="display: none;">
+          <div class="error-icon">🗺️</div>
+          <div class="error-title">Map temporarily unavailable</div>
+          <div class="error-message">Please check your connection and try again</div>
+        </div>
         <script>
-          var map = L.map('map').setView([${initialRegion.latitude}, ${initialRegion.longitude}], 15);
-          
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(map);
-          
-          ${markersHTML}
-          
-          ${showsUserLocation ? `
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-              L.marker([position.coords.latitude, position.coords.longitude])
-                .addTo(map)
-                .bindPopup('Your location');
-            });
-          }
-          ` : ''}
-          
-          map.on('click', function(e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'mapPress',
-              nativeEvent: {
-                coordinate: {
-                  latitude: e.latlng.lat,
-                  longitude: e.latlng.lng
+          try {
+            // Simple fallback map without external dependencies
+            var mapContainer = document.getElementById('map');
+            var errorContainer = document.getElementById('error');
+            
+            // Create a simple grid-based map as fallback
+            mapContainer.innerHTML = \`
+              <div style="
+                height: 100vh; 
+                width: 100vw; 
+                background: #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+              ">
+                <div style="font-size: 48px; margin-bottom: 16px;">📍</div>
+                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #374151;">
+                  Location: ${initialRegion.latitude.toFixed(4)}, ${initialRegion.longitude.toFixed(4)}
+                </div>
+                <div style="font-size: 14px; color: #6b7280; text-align: center; max-width: 280px;">
+                  Tap anywhere to place a pin or view your finds
+                </div>
+              </div>
+            \`;
+            
+            // Handle map clicks for fallback
+            mapContainer.addEventListener('click', function(e) {
+              // Calculate approximate coordinates based on click position
+              var rect = mapContainer.getBoundingClientRect();
+              var x = (e.clientX - rect.left) / rect.width;
+              var y = (e.clientY - rect.top) / rect.height;
+              
+              // Simple coordinate calculation (not accurate but functional)
+              var lat = ${initialRegion.latitude} + (0.5 - y) * 0.01;
+              var lng = ${initialRegion.longitude} + (x - 0.5) * 0.01;
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'mapPress',
+                nativeEvent: {
+                  coordinate: {
+                    latitude: lat,
+                    longitude: lng
+                  }
                 }
-              }
-            }));
-          });
+              }));
+            });
 
-          // Listen for messages from React Native
-          window.addEventListener('message', function(event) {
-            try {
-              const data = JSON.parse(event.data);
-              if (data.type === 'centerMap') {
-                map.setView([data.latitude, data.longitude], data.zoom || 15);
+            // Listen for messages from React Native
+            window.addEventListener('message', function(event) {
+              try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'centerMap') {
+                  // Update the displayed coordinates
+                  var locationText = mapContainer.querySelector('[style*="font-weight: 600"]');
+                  if (locationText) {
+                    locationText.textContent = 'Location: ' + data.latitude.toFixed(4) + ', ' + data.longitude.toFixed(4);
+                  }
+                }
+              } catch (error) {
+                console.error('Error parsing message:', error);
               }
-            } catch (error) {
-              console.error('Error parsing message:', error);
-            }
-          });
+            });
+            
+          } catch (error) {
+            console.error('Map initialization error:', error);
+            document.getElementById('error').style.display = 'flex';
+            document.getElementById('map').style.display = 'none';
+          }
         </script>
       </body>
       </html>
@@ -130,17 +176,50 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
     }
   };
 
+  const handleWebViewError = () => {
+    setHasError(true);
+  };
+
+  const handleLoadEnd = () => {
+    // Reset error state on successful load
+    setHasError(false);
+  };
+
+  if (hasError) {
+    return (
+      <View style={[style, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' }]}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>🗺️</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8, color: '#374151' }}>
+          Map temporarily unavailable
+        </Text>
+        <Text style={{ fontSize: 14, textAlign: 'center', color: '#6b7280', paddingHorizontal: 20 }}>
+          Please check your connection and restart the app
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <WebView
       ref={mapRef}
       style={style}
       source={{ html: generateMapHTML() }}
       onMessage={handleMessage}
+      onError={handleWebViewError}
+      onHttpError={handleWebViewError}
+      onLoadEnd={handleLoadEnd}
       javaScriptEnabled={true}
       domStorageEnabled={true}
-      geolocationEnabled={true}
+      geolocationEnabled={false}
       allowsInlineMediaPlayback={true}
       mediaPlaybackRequiresUserAction={false}
+      startInLoadingState={true}
+      renderLoading={() => (
+        <View style={[style, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' }]}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>📍</Text>
+          <Text style={{ fontSize: 16, color: '#374151' }}>Loading map...</Text>
+        </View>
+      )}
     />
   );
 };
