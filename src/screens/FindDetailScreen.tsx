@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Image, Alert, Linking, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForagingStore } from '../state/foraging-store';
 import { ForagingFind } from '../types/foraging';
@@ -106,11 +107,6 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
             
             {/* Action Buttons Overlay */}
             <View className="absolute top-4 right-4 flex-row gap-2">
-              {find.isPrivate && (
-                <View className="bg-black/50 rounded-full p-2">
-                  <Ionicons name="eye-off" size={20} color="white" />
-                </View>
-              )}
               
               <Pressable
                 onPress={() => navigation.navigate('LogFind', { editFind: find })}
@@ -138,11 +134,6 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
             
             {/* Action Buttons */}
             <View className="absolute top-4 right-4 flex-row gap-2">
-              {find.isPrivate && (
-                <View className="bg-black/50 rounded-full p-2">
-                  <Ionicons name="eye-off" size={20} color="white" />
-                </View>
-              )}
               
               <Pressable
                 onPress={() => navigation.navigate('LogFind', { editFind: find })}
@@ -191,6 +182,18 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
                         {relatedRecipes.length} Recipe{relatedRecipes.length > 1 ? 's' : ''}
                       </Text>
                     </Pressable>
+                  )}
+                  
+                  {/* Harvest Months */}
+                  {find.harvestMonths && Object.values(find.harvestMonths).some(Boolean) && (
+                    <View className="bg-green-100 px-3 py-2 rounded-full">
+                      <Text className="text-green-700 font-semibold text-sm">
+                        🗓️ {Object.entries(find.harvestMonths)
+                          .filter(([_, selected]) => selected)
+                          .map(([month, _]) => month.charAt(0).toUpperCase() + month.slice(1))
+                          .join(', ')}
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
@@ -311,33 +314,15 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
                   </Text>
                 </View>
                 
-                <View className="flex-row gap-3">
-                  <Pressable
-                    onPress={() => {
-                      // Navigate to internal map and set focused find
-                      const tabNavigation = navigation.getParent();
-                      const { setFocusedFind } = useForagingStore.getState();
-                      setFocusedFind(find);
-                      tabNavigation?.navigate('Map');
-                    }}
-                    className="flex-1 bg-green-500 py-3 rounded-xl flex-row items-center justify-center"
-                  >
-                    <Ionicons name="location" size={18} color="white" />
-                    <Text className="text-white font-bold ml-2">
-                      View on Map
-                    </Text>
-                  </Pressable>
-                  
-                  <Pressable
-                    onPress={openInMaps}
-                    className="flex-1 bg-blue-500 py-3 rounded-xl flex-row items-center justify-center"
-                  >
-                    <Ionicons name="map" size={18} color="white" />
-                    <Text className="text-white font-bold ml-2">
-                      Open in Maps
-                    </Text>
-                  </Pressable>
-                </View>
+                <Pressable
+                  onPress={openInMaps}
+                  className="bg-blue-500 py-3 rounded-xl flex-row items-center justify-center"
+                >
+                  <Ionicons name="map" size={18} color="white" />
+                  <Text className="text-white font-bold ml-2">
+                    Open in Maps App
+                  </Text>
+                </Pressable>
               </View>
             </View>
           )}

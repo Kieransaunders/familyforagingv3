@@ -128,12 +128,18 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
                 </Pressable>
               )}
 
-              {find.isPrivate && (
-                <View className="bg-gray-100 px-2 py-1 rounded-full flex-row items-center">
-                  <Ionicons name="lock-closed" size={12} color="#6b7280" />
-                  <Text className="text-xs font-medium text-gray-700 ml-1">Private</Text>
+              {/* Harvest Months */}
+              {find.harvestMonths && Object.values(find.harvestMonths).some(Boolean) && (
+                <View className="bg-green-100 px-2 py-1 rounded-full">
+                  <Text className="text-xs font-medium text-green-700">
+                    🗓️ {Object.entries(find.harvestMonths)
+                      .filter(([_, selected]) => selected)
+                      .map(([month, _]) => month.charAt(0).toUpperCase() + month.slice(1))
+                      .join(', ')}
+                  </Text>
                 </View>
               )}
+
             </View>
           </View>
         </View>
@@ -189,6 +195,8 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
               <Pressable 
                 onPress={(e) => {
                   e.stopPropagation();
+                  console.log('view-on-map-press from MyFinds'); // Validation log
+                  
                   // Get the parent tab navigator and set the focused find
                   const tabNavigation = navigation.getParent();
                   const { setFocusedFind } = useForagingStore.getState();

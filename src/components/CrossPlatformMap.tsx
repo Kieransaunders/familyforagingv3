@@ -38,20 +38,54 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const generateMapHTML = () => {
-    const markersHTML = markers.map(marker => `
-      L.marker([${marker.coordinate.latitude}, ${marker.coordinate.longitude}])
-        .addTo(map)
-        .bindPopup(\`<div style="padding: 8px;">
-          <div style="font-weight: 600; color: #111827;">${marker.title}</div>
-          ${marker.description ? `<div style="font-size: 14px; color: #6b7280;">${marker.description}</div>` : ''}
-        </div>\`)
-        .on('click', function() {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'markerPress',
-            markerId: '${marker.id}'
-          }));
-        });
-    `).join('');
+    // Generate marker divs for the fallback map
+    const markersHTML = markers.map(marker => {
+      // Calculate relative position on map (simplified positioning)
+      const relativeX = 50; // Center for now - could be calculated based on coordinates
+      const relativeY = 50;
+      
+      return `
+        <div 
+          class="map-marker" 
+          data-marker-id="${marker.id}"
+          style="
+            position: absolute;
+            left: ${relativeX}%;
+            top: ${relativeY}%;
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+            z-index: 10;
+          "
+          onclick="handleMarkerClick('${marker.id}')"
+        >
+          <div style="
+            background: ${marker.pinColor || '#ef4444'};
+            width: 20px;
+            height: 20px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          "></div>
+          <div style="
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            display: none;
+          " class="marker-popup">
+            <div style="font-weight: 600; color: #111827;">${marker.title}</div>
+            ${marker.description ? `<div style="font-size: 11px; color: #6b7280;">${marker.description}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
 
     return `
       <!DOCTYPE html>
@@ -89,27 +123,121 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
             var mapContainer = document.getElementById('map');
             var errorContainer = document.getElementById('error');
             
-            // Create a simple grid-based map as fallback
+            // Create a map with OpenStreetMap tiles
             mapContainer.innerHTML = \`
-              <div style="
+              <div id="mapView" style="
                 height: 100vh; 
                 width: 100vw; 
-                background: #e5e7eb;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-direction: column;
+                background-color: #f3f4f6;
+                position: relative;
+                overflow: hidden;
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
               ">
-                <div style="font-size: 48px; margin-bottom: 16px;">📍</div>
-                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #374151;">
-                  Location: ${initialRegion.latitude.toFixed(4)}, ${initialRegion.longitude.toFixed(4)}
+                <!-- Center location info -->
+                <div style="
+                  position: absolute;
+                  top: 20px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background: rgba(255,255,255,0.9);
+                  padding: 8px 16px;
+                  border-radius: 20px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #374151;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  z-index: 5;
+                " id="location-display">
+                  📍 ${initialRegion.latitude.toFixed(4)}, ${initialRegion.longitude.toFixed(4)}
                 </div>
-                <div style="font-size: 14px; color: #6b7280; text-align: center; max-width: 280px;">
-                  Tap anywhere to place a pin or view your finds
+                
+                <!-- Instructions -->
+                <div style="
+                  position: absolute;
+                  bottom: 20px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background: rgba(255,255,255,0.9);
+                  padding: 8px 16px;
+                  border-radius: 12px;
+                  font-size: 12px;
+                  color: #6b7280;
+                  text-align: center;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  z-index: 5;
+                ">
+                  Tap anywhere to place a pin
                 </div>
+                
+                <!-- Markers -->
+                ${markersHTML}
               </div>
             \`;
+            
+            // Load map tiles
+            function loadMapTiles() {
+              const mapView = document.getElementById('mapView');
+              const lat = ${initialRegion.latitude};
+              const lng = ${initialRegion.longitude};
+              const zoom = 13;
+              
+              // Calculate tile coordinates
+              function deg2num(lat_deg, lon_deg, zoom) {
+                const lat_rad = lat_deg * Math.PI / 180.0;
+                const n = Math.pow(2.0, zoom);
+                const xtile = Math.floor((lon_deg + 180.0) / 360.0 * n);
+                const ytile = Math.floor((1.0 - Math.asinh(Math.tan(lat_rad)) / Math.PI) / 2.0 * n);
+                return {x: xtile, y: ytile};
+              }
+              
+              const centerTile = deg2num(lat, lng, zoom);
+              const tileSize = 256;
+              const tilesWide = Math.ceil(window.innerWidth / tileSize) + 2;
+              const tilesHigh = Math.ceil(window.innerHeight / tileSize) + 2;
+              
+              const startX = centerTile.x - Math.floor(tilesWide / 2);
+              const startY = centerTile.y - Math.floor(tilesHigh / 2);
+              
+              // Add map tiles
+              for (let x = 0; x < tilesWide; x++) {
+                for (let y = 0; y < tilesHigh; y++) {
+                  const tileX = startX + x;
+                  const tileY = startY + y;
+                  
+                  if (tileX >= 0 && tileY >= 0 && tileX < Math.pow(2, zoom) && tileY < Math.pow(2, zoom)) {
+                    const img = document.createElement('img');
+                    img.className = 'map-tile';
+                    img.src = \`https://tile.openstreetmap.org/\${zoom}/\${tileX}/\${tileY}.png\`;
+                    img.style.position = 'absolute';
+                    img.style.left = (x * tileSize) + 'px';
+                    img.style.top = (y * tileSize) + 'px';
+                    img.style.width = tileSize + 'px';
+                    img.style.height = tileSize + 'px';
+                    img.style.zIndex = '1';
+                    
+                    img.onerror = function() {
+                      // Fallback to colored tile on error
+                      this.style.backgroundColor = '#e5e7eb';
+                      this.style.border = '1px solid #d1d5db';
+                      this.style.display = 'block';
+                    };
+                    
+                    mapView.appendChild(img);
+                  }
+                }
+              }
+            }
+            
+            // Load tiles initially
+            loadMapTiles();
+            
+            // Handle marker clicks
+            window.handleMarkerClick = function(markerId) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'markerPress',
+                markerId: markerId
+              }));
+            };
             
             // Handle map clicks for fallback
             mapContainer.addEventListener('click', function(e) {
@@ -139,9 +267,9 @@ const CrossPlatformMap: React.FC<CrossPlatformMapProps> = ({
                 var data = JSON.parse(event.data);
                 if (data.type === 'centerMap') {
                   // Update the displayed coordinates
-                  var locationText = mapContainer.querySelector('[style*="font-weight: 600"]');
-                  if (locationText) {
-                    locationText.textContent = 'Location: ' + data.latitude.toFixed(4) + ', ' + data.longitude.toFixed(4);
+                  var locationDisplay = document.getElementById('location-display');
+                  if (locationDisplay) {
+                    locationDisplay.textContent = '📍 ' + data.latitude.toFixed(4) + ', ' + data.longitude.toFixed(4);
                   }
                 }
               } catch (error) {

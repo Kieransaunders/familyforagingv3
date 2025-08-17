@@ -52,12 +52,6 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
     }
   };
 
-  const findNearbyIngredients = () => {
-    // This would navigate to map filtered by ingredients
-    navigation.navigate('Map', { 
-      filter: { ingredients: recipe.requiredFinds }
-    });
-  };
 
   const handleEditRecipe = () => {
     navigation.navigate('RecipeCreate', { editRecipe: recipe });
@@ -196,16 +190,6 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
               </View>
             ))}
             
-            {totalAvailable < recipe.requiredFinds.length && (
-              <Pressable
-                onPress={findNearbyIngredients}
-                className="bg-green-500 py-3 rounded-lg mt-3"
-              >
-                <Text className="text-white text-center font-semibold">
-                  Find Missing Ingredients on Map
-                </Text>
-              </Pressable>
-            )}
           </View>
         )}
 

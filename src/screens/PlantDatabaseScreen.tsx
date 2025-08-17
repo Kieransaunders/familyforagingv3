@@ -289,3 +289,4 @@ const getCategoryColor = (category: string) => {
     default: return '#6b7280';
   }
 };
+

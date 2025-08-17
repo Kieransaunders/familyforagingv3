@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useForagingStore } from '../state/foraging-store';
 import { ForagingFind } from '../types/foraging';
-import { getCurrentSeasonSuggestions } from '../data/seasonal-suggestions';
+import { getCurrentSeasonalSuggestionsFromDatabase } from '../data/plants';
 import { cn } from '../utils/cn';
 
 interface LogFindScreenProps {
@@ -21,14 +21,24 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
   const [category, setCategory] = useState<ForagingFind['category']>(editFind?.category || 'plant');
   const [notes, setNotes] = useState(editFind?.notes || '');
   const [habitat, setHabitat] = useState(editFind?.habitat || '');
-  const [isPrivate, setIsPrivate] = useState(editFind?.isPrivate || false);
   const [photos, setPhotos] = useState<string[]>(editFind?.photos || []);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
+  // Initialize harvest months - default to current month if new find
+  const defaultHarvestMonths = editFind?.harvestMonths || (() => {
+    const currentMonth = new Date().getMonth();
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const months = { jan: false, feb: false, mar: false, apr: false, may: false, jun: false, jul: false, aug: false, sep: false, oct: false, nov: false, dec: false };
+    months[monthKeys[currentMonth] as keyof typeof months] = true;
+    return months;
+  })();
+  
+  const [harvestMonths, setHarvestMonths] = useState(defaultHarvestMonths);
+  
   const { addFind, updateFind, currentLocation, presetLogLocation, setPresetLogLocation } = useForagingStore();
-  const seasonalSuggestions = getCurrentSeasonSuggestions();
+  const seasonalSuggestions = getCurrentSeasonalSuggestionsFromDatabase();
   const manualMode = route?.params?.manualMode;
 
   useEffect(() => {
@@ -146,7 +156,7 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
         photos,
         notes: notes.trim(),
         habitat: habitat.trim(),
-        isPrivate,
+        harvestMonths,
       };
 
       updateFind(editFind.id, updatedFind);
@@ -174,9 +184,9 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
         habitat: habitat.trim(),
         dateFound: new Date(),
         season: getSeason(),
-        isPrivate,
         userId: 'current-user', // In a real app, this would be the authenticated user
         tags: [], // Could be enhanced to allow custom tags
+        harvestMonths,
       };
 
       addFind(find);
@@ -192,7 +202,12 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
             setHabitat('');
             setPhotos([]);
             setCategory('plant');
-            setIsPrivate(false);
+            // Reset harvest months to current month
+            const currentMonth = new Date().getMonth();
+            const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            const resetMonths = { jan: false, feb: false, mar: false, apr: false, may: false, jun: false, jul: false, aug: false, sep: false, oct: false, nov: false, dec: false };
+            resetMonths[monthKeys[currentMonth] as keyof typeof resetMonths] = true;
+            setHarvestMonths(resetMonths);
             
             // Navigate back to map if came from pin placement
             if (presetLogLocation) {
@@ -359,6 +374,55 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
             />
           </View>
 
+          {/* Harvest Months */}
+          <View className="mb-4">
+            <Text className="text-gray-700 font-medium mb-2">Best Harvest Months</Text>
+            <Text className="text-gray-500 text-sm mb-3">Select when this plant is typically ready for harvest</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                { key: 'jan' as const, label: 'Jan' },
+                { key: 'feb' as const, label: 'Feb' },
+                { key: 'mar' as const, label: 'Mar' },
+                { key: 'apr' as const, label: 'Apr' },
+                { key: 'may' as const, label: 'May' },
+                { key: 'jun' as const, label: 'Jun' },
+                { key: 'jul' as const, label: 'Jul' },
+                { key: 'aug' as const, label: 'Aug' },
+                { key: 'sep' as const, label: 'Sep' },
+                { key: 'oct' as const, label: 'Oct' },
+                { key: 'nov' as const, label: 'Nov' },
+                { key: 'dec' as const, label: 'Dec' },
+              ].map((month) => (
+                <Pressable
+                  key={month.key}
+                  onPress={() => {
+                    setHarvestMonths(prev => ({
+                      ...prev,
+                      [month.key]: !prev[month.key]
+                    }));
+                  }}
+                  className={cn(
+                    'px-3 py-2 rounded-lg border flex-1 min-w-[70px] items-center',
+                    harvestMonths[month.key]
+                      ? 'bg-green-500 border-green-500'
+                      : 'bg-gray-50 border-gray-200'
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      'text-sm font-medium',
+                      harvestMonths[month.key]
+                        ? 'text-white'
+                        : 'text-gray-700'
+                    )}
+                  >
+                    {month.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
           {/* Notes */}
           <View className="mb-4">
             <Text className="text-gray-700 font-medium mb-2">Notes</Text>
@@ -373,24 +437,6 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
             />
           </View>
 
-          {/* Privacy Toggle */}
-          <View className="flex-row items-center justify-between">
-            <Text className="text-gray-700 font-medium">Keep private</Text>
-            <Pressable
-              onPress={() => setIsPrivate(!isPrivate)}
-              className={cn(
-                "w-12 h-6 rounded-full p-1",
-                isPrivate ? "bg-green-500" : "bg-gray-200"
-              )}
-            >
-              <View
-                className={cn(
-                  "w-4 h-4 rounded-full bg-white transition-transform",
-                  isPrivate ? "translate-x-6" : "translate-x-0"
-                )}
-              />
-            </Pressable>
-          </View>
         </View>
 
         {/* Photos */}

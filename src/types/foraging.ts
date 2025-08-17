@@ -12,9 +12,22 @@ export interface ForagingFind {
   dateFound: Date;
   season: 'spring' | 'summer' | 'autumn' | 'winter';
   habitat: string;
-  isPrivate: boolean;
   userId: string;
   tags: string[];
+  harvestMonths: {
+    jan: boolean;
+    feb: boolean;
+    mar: boolean;
+    apr: boolean;
+    may: boolean;
+    jun: boolean;
+    jul: boolean;
+    aug: boolean;
+    sep: boolean;
+    oct: boolean;
+    nov: boolean;
+    dec: boolean;
+  };
 }
 
 export interface Recipe {
@@ -40,7 +53,6 @@ export interface MapFilter {
     start: Date;
     end: Date;
   };
-  showPrivate: boolean;
   radius: number;
   inSeasonNow?: boolean; // Only show finds for plants in season for current month
 }

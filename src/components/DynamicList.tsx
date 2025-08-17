@@ -145,7 +145,7 @@ export default function DynamicList({
       {/* Add New Item */}
       {items.length < maxItems && (
         <View>
-          <View className="flex-row space-x-3 mb-2">
+          <View className="flex-row space-x-3">
             <TextInput
               value={newItem}
               onChangeText={setNewItem}
@@ -163,14 +163,6 @@ export default function DynamicList({
               <Ionicons name="add" size={24} color="white" />
             </Pressable>
           </View>
-          
-          <Pressable
-            onPress={addItem}
-            className="bg-green-100 border border-green-300 rounded-xl py-3 flex-row items-center justify-center"
-          >
-            <Ionicons name="add-circle" size={20} color="#22c55e" />
-            <Text className="text-green-700 font-medium ml-2">{addButtonText}</Text>
-          </Pressable>
         </View>
       )}
 

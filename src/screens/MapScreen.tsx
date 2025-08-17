@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useForagingStore } from '../state/foraging-store';
 import { ForagingFind } from '../types/foraging';
 import { getCurrentSeasonSuggestions } from '../data/seasonal-suggestions';
 import { cn } from '../utils/cn';
-import CrossPlatformMap from '../components/CrossPlatformMap';
+import SimpleMap from '../components/SimpleMap';
+import QuickFindBottomSheet from '../components/QuickFindBottomSheet';
 
 interface MapScreenProps {
   navigation: any;
@@ -20,7 +23,8 @@ export default function MapScreen({ navigation }: MapScreenProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSeasonalSuggestions, setShowSeasonalSuggestions] = useState(false);
   const [pendingPin, setPendingPin] = useState<{latitude: number, longitude: number} | null>(null);
-  const [isPlacingPin, setIsPlacingPin] = useState(false);
+  const [showQuickFindSheet, setShowQuickFindSheet] = useState(false);
+  const [undoPin, setUndoPin] = useState<{findId: string, timeout: NodeJS.Timeout} | null>(null);
   
   const { 
     finds, 
@@ -32,6 +36,10 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     setCurrentLocation,
     setPresetLogLocation,
     plants,
+    focusedFind,
+    setFocusedFind,
+    addFind,
+    deleteFind,
   } = useForagingStore();
 
   const seasonalSuggestions = getCurrentSeasonSuggestions();
@@ -53,13 +61,41 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     })();
   }, []);
 
+  // Reset filters when map screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset map filters to default state
+      setMapFilter({ 
+        category: [], 
+        inSeasonNow: false 
+      });
+      
+      // Close any open filter panels
+      setShowFilters(false);
+      setShowSeasonalSuggestions(false);
+    }, [setMapFilter])
+  );
+
+  // Handle focused find - center map on it when set
+  useEffect(() => {
+    if (focusedFind && mapRef.current) {
+      // Small delay to ensure map is loaded
+      const timer = setTimeout(() => {
+        centerOnFind(focusedFind);
+        // Clear the focused find after centering
+        setFocusedFind(null);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [focusedFind]);
+
   const monthIndex = new Date().getMonth(); // 0-11
   const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
 
   const filteredFinds = finds.filter(find => {
     if (find.location.latitude === 0 && find.location.longitude === 0) return false;
     if (mapFilter.category.length > 0 && !mapFilter.category.includes(find.category)) return false;
-    if (!mapFilter.showPrivate && find.isPrivate) return false;
 
     if (mapFilter.inSeasonNow) {
       const matchedPlant = plants.find(p => p.name.toLowerCase().trim() === find.name.toLowerCase().trim());
@@ -74,13 +110,33 @@ export default function MapScreen({ navigation }: MapScreenProps) {
 
   const centerOnLocation = async () => {
     if (location && mapRef.current) {
-      // For WebView-based map, we'll post a message to center the map
-      mapRef.current.postMessage(JSON.stringify({
-        type: 'centerMap',
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        zoom: 15
-      }));
+      // Use injectJavaScript to directly call window.setView
+      const lat = location.coords.latitude;
+      const lng = location.coords.longitude;
+      const zoom = 15;
+      
+      mapRef.current.injectJavaScript(`
+        if (window.setView) {
+          window.setView(${lat}, ${lng}, ${zoom});
+        }
+        true;
+      `);
+    }
+  };
+
+  const centerOnFind = (find: ForagingFind) => {
+    if (mapRef.current && find.location.latitude !== 0 && find.location.longitude !== 0) {
+      // Use injectJavaScript to directly call window.setView
+      const lat = find.location.latitude;
+      const lng = find.location.longitude;
+      const zoom = 17;
+      
+      mapRef.current.injectJavaScript(`
+        if (window.setView) {
+          window.setView(${lat}, ${lng}, ${zoom});
+        }
+        true;
+      `);
     }
   };
 
@@ -103,42 +159,103 @@ export default function MapScreen({ navigation }: MapScreenProps) {
   };
 
   const handleMapPress = (event: any) => {
-    if (isPlacingPin) {
-      // Handle both web and mobile events
-      const coordinate = event.nativeEvent?.coordinate || event.latlng;
-      if (coordinate) {
-        const latitude = coordinate.latitude || coordinate.lat;
-        const longitude = coordinate.longitude || coordinate.lng;
-        setPendingPin({ latitude, longitude });
-        setIsPlacingPin(false);
-      }
+    // Regular map press - currently no action needed
+  };
+
+  const handleMapLongPress = (event: any) => {
+    // Handle long press to drop pin
+    const coordinate = event.nativeEvent?.coordinate || event.latlng;
+    if (coordinate) {
+      const latitude = coordinate.latitude || coordinate.lat;
+      const longitude = coordinate.longitude || coordinate.lng;
+      
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Set pending pin and show bottom sheet
+      setPendingPin({ latitude, longitude });
+      setShowQuickFindSheet(true);
     }
   };
 
-  const confirmPinPlacement = () => {
+
+  const handleQuickFindSave = (data: { name: string; category: string; notes: string }) => {
     if (pendingPin) {
-      // Store the preset location in the global state
-      setPresetLogLocation(pendingPin);
-      // Navigate to the LogFind screen within the Map stack
-      navigation.navigate('LogFind');
+      // Determine current season
+      const month = new Date().getMonth();
+      let season: 'spring' | 'summer' | 'autumn' | 'winter';
+      if (month >= 2 && month <= 4) season = 'spring';
+      else if (month >= 5 && month <= 7) season = 'summer';
+      else if (month >= 8 && month <= 10) season = 'autumn';
+      else season = 'winter';
+      
+      // Create the find with default harvest month set to current month
+      const findId = Date.now().toString();
+      const currentMonth = new Date().getMonth();
+      const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const defaultHarvestMonths = { jan: false, feb: false, mar: false, apr: false, may: false, jun: false, jul: false, aug: false, sep: false, oct: false, nov: false, dec: false };
+      defaultHarvestMonths[monthKeys[currentMonth] as keyof typeof defaultHarvestMonths] = true;
+      
+      const newFind = {
+        id: findId,
+        name: data.name,
+        category: data.category as 'plant' | 'fungi' | 'berry' | 'nut' | 'herb' | 'other',
+        location: pendingPin,
+        dateFound: new Date(),
+        notes: data.notes,
+        photos: [],
+        season,
+        habitat: 'Not specified',
+        userId: 'local-user',
+        tags: [],
+        harvestMonths: defaultHarvestMonths,
+      };
+      
+      // Add to store
+      addFind(newFind);
+      
+      // Show undo option temporarily
+      showUndoOption(findId);
+      
+      // Close bottom sheet and clear pending pin
+      setShowQuickFindSheet(false);
       setPendingPin(null);
+      
+      // Navigate to the edit screen for the newly created find
+      navigation.navigate('LogFind', { editFind: newFind });
     }
   };
 
-  const cancelPinPlacement = () => {
+  const handleQuickFindCancel = () => {
+    setShowQuickFindSheet(false);
     setPendingPin(null);
-    setIsPlacingPin(false);
   };
 
-  const startPlacingPin = () => {
-    setIsPlacingPin(true);
-    setShowFilters(false);
-    setShowSeasonalSuggestions(false);
-    Alert.alert(
-      'Place Pin',
-      'Tap anywhere on the map to place a pin for logging a new find.',
-      [{ text: 'Got it!' }]
-    );
+  const showUndoOption = (findId: string) => {
+    // Clear any existing undo timeout
+    if (undoPin?.timeout) {
+      clearTimeout(undoPin.timeout);
+    }
+    
+    // Set new undo option with 5 second timeout
+    const timeout = setTimeout(() => {
+      setUndoPin(null);
+    }, 5000);
+    
+    setUndoPin({ findId, timeout });
+  };
+
+  const handleUndo = () => {
+    if (undoPin) {
+      // Remove the find from store
+      deleteFind(undoPin.findId);
+      
+      // Clear undo option
+      if (undoPin.timeout) {
+        clearTimeout(undoPin.timeout);
+      }
+      setUndoPin(null);
+    }
   };
 
   if (errorMsg) {
@@ -169,7 +286,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1">
-        <CrossPlatformMap
+        <SimpleMap
           mapRef={mapRef}
           style={{ flex: 1 }}
           initialRegion={{
@@ -180,6 +297,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
           }}
           showsUserLocation
           onPress={handleMapPress}
+          onLongPress={handleMapLongPress}
           markers={[
             ...filteredFinds.map((find) => ({
               id: find.id,
@@ -192,14 +310,6 @@ export default function MapScreen({ navigation }: MapScreenProps) {
               pinColor: getCategoryColor(find.category),
               onPress: () => navigation.navigate('FindDetail', { find }),
             })),
-            ...(pendingPin ? [{
-              id: 'pending-pin',
-              coordinate: pendingPin,
-              title: 'New Find Location',
-              description: 'Tap to log find here',
-              pinColor: '#ff6b6b',
-              onPress: confirmPinPlacement,
-            }] : []),
           ]}
         />
 
@@ -222,20 +332,6 @@ export default function MapScreen({ navigation }: MapScreenProps) {
             className="bg-white rounded-full p-3 shadow-lg"
           >
             <Ionicons name="locate" size={24} color="#22c55e" />
-          </Pressable>
-
-          <Pressable
-            onPress={startPlacingPin}
-            className={cn(
-              "rounded-full p-3 shadow-lg",
-              isPlacingPin ? "bg-red-500" : "bg-white"
-            )}
-          >
-            <Ionicons 
-              name="add-circle" 
-              size={24} 
-              color={isPlacingPin ? "white" : "#22c55e"} 
-            />
           </Pressable>
 
           <Pressable
@@ -267,41 +363,19 @@ export default function MapScreen({ navigation }: MapScreenProps) {
           </Pressable>
         </View>
 
-        {/* Pin Placement Instructions */}
-        {isPlacingPin && (
-          <View className="absolute top-32 left-4 right-4 bg-red-100 border border-red-300 rounded-xl p-4">
-            <Text className="font-semibold text-red-800 mb-2">📍 Placing Pin Mode</Text>
-            <Text className="text-red-700 text-sm">
-              Tap anywhere on the map to place a pin
-            </Text>
-            <Pressable
-              onPress={cancelPinPlacement}
-              className="bg-red-500 py-2 px-4 rounded-lg mt-2 self-start"
-            >
-              <Text className="text-white font-medium">Cancel</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Pending Pin Confirmation */}
-        {pendingPin && !isPlacingPin && (
-          <View className="absolute top-32 left-4 right-4 bg-green-100 border border-green-300 rounded-xl p-4">
-            <Text className="font-semibold text-green-800 mb-2">📍 Pin Placed!</Text>
-            <Text className="text-green-700 text-sm mb-3">
-              Ready to log a find at this location?
-            </Text>
-            <View className="flex-row space-x-3">
+        {/* Undo Chip */}
+        {undoPin && (
+          <View className="absolute top-32 left-4 right-4 bg-green-100 border border-green-300 rounded-xl p-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <Text className="font-semibold text-green-800">📍 Find added!</Text>
+                <Text className="text-green-700 text-sm">Pin placed on map</Text>
+              </View>
               <Pressable
-                onPress={confirmPinPlacement}
-                className="bg-green-500 py-2 px-4 rounded-lg flex-1"
+                onPress={handleUndo}
+                className="bg-green-500 py-2 px-4 rounded-lg ml-3"
               >
-                <Text className="text-white font-medium text-center">Log Find Here</Text>
-              </Pressable>
-              <Pressable
-                onPress={cancelPinPlacement}
-                className="bg-gray-500 py-2 px-4 rounded-lg flex-1"
-              >
-                <Text className="text-white font-medium text-center">Cancel</Text>
+                <Text className="text-white font-medium">Undo</Text>
               </Pressable>
             </View>
           </View>
@@ -337,23 +411,6 @@ export default function MapScreen({ navigation }: MapScreenProps) {
               ))}
             </View>
             
-            <View className="flex-row items-center justify-between mt-4">
-              <Text className="text-sm text-gray-600">Show private finds</Text>
-              <Pressable
-                onPress={() => setMapFilter({ showPrivate: !mapFilter.showPrivate })}
-                className={cn(
-                  "w-12 h-6 rounded-full p-1",
-                  mapFilter.showPrivate ? "bg-green-500" : "bg-gray-200"
-                )}
-              >
-                <View
-                  className={cn(
-                    "w-4 h-4 rounded-full bg-white transition-transform",
-                    mapFilter.showPrivate ? "translate-x-6" : "translate-x-0"
-                  )}
-                />
-              </Pressable>
-            </View>
 
             <View className="flex-row items-center justify-between mt-3">
               <Text className="text-sm text-gray-600">In season now</Text>
@@ -411,6 +468,16 @@ export default function MapScreen({ navigation }: MapScreenProps) {
               )}
             </View>
           )}
+
+        {/* Quick Find Bottom Sheet */}
+        {pendingPin && (
+          <QuickFindBottomSheet
+            visible={showQuickFindSheet}
+            location={pendingPin}
+            onSave={handleQuickFindSave}
+            onCancel={handleQuickFindCancel}
+          />
+        )}
 
       </View>
     </SafeAreaView>
