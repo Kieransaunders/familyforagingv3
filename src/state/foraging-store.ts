@@ -59,6 +59,18 @@ interface ForagingState {
   // Focused find for map navigation
   focusedFind: ForagingFind | null;
   setFocusedFind: (find: ForagingFind | null) => void;
+  
+  // Offline map state
+  lastMapRegion: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  } | null;
+  setLastMapRegion: (region: { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number }) => void;
+  
+  lastOnlineTimestamp: Date | null;
+  setLastOnlineTimestamp: (timestamp: Date) => void;
 }
 
 function monthFlagsDefault() {
@@ -189,6 +201,13 @@ export const useForagingStore = create<ForagingState>()(
       // Focused find for map navigation
       focusedFind: null,
       setFocusedFind: (find) => set({ focusedFind: find }),
+      
+      // Offline map state
+      lastMapRegion: null,
+      setLastMapRegion: (region) => set({ lastMapRegion: region }),
+      
+      lastOnlineTimestamp: null,
+      setLastOnlineTimestamp: (timestamp) => set({ lastOnlineTimestamp: timestamp }),
     }),
     {
       name: 'foraging-store',
@@ -201,6 +220,8 @@ export const useForagingStore = create<ForagingState>()(
         favoritePlants: state.favoritePlants,
         mapFilter: state.mapFilter,
         showHeatZones: state.showHeatZones,
+        lastMapRegion: state.lastMapRegion,
+        lastOnlineTimestamp: state.lastOnlineTimestamp,
       }),
     }
   )

@@ -5,12 +5,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
 import { useForagingStore } from '../state/foraging-store';
 import { ForagingFind } from '../types/foraging';
 import { getCurrentSeasonSuggestions } from '../data/seasonal-suggestions';
 import { cn } from '../utils/cn';
 import SimpleMap from '../components/SimpleMap';
 import QuickFindBottomSheet from '../components/QuickFindBottomSheet';
+import OfflineBanner from '../components/OfflineBanner';
 
 interface MapScreenProps {
   navigation: any;
@@ -25,6 +27,8 @@ export default function MapScreen({ navigation }: MapScreenProps) {
   const [pendingPin, setPendingPin] = useState<{latitude: number, longitude: number} | null>(null);
   const [showQuickFindSheet, setShowQuickFindSheet] = useState(false);
   const [undoPin, setUndoPin] = useState<{findId: string, timeout: NodeJS.Timeout} | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastOnlineTime, setLastOnlineTime] = useState<Date | null>(null);
   
   const { 
     finds, 
@@ -40,6 +44,10 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     setFocusedFind,
     addFind,
     deleteFind,
+    lastMapRegion,
+    setLastMapRegion,
+    lastOnlineTimestamp,
+    setLastOnlineTimestamp,
   } = useForagingStore();
 
   const seasonalSuggestions = getCurrentSeasonSuggestions();
@@ -60,6 +68,38 @@ export default function MapScreen({ navigation }: MapScreenProps) {
       });
     })();
   }, []);
+
+  // Network connectivity monitoring
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const wasOnline = isOnline;
+      setIsOnline(state.isConnected ?? false);
+      
+      if (state.isConnected && !wasOnline) {
+        // Just came back online
+        const now = new Date();
+        setLastOnlineTime(now);
+        setLastOnlineTimestamp(now);
+      } else if (state.isConnected) {
+        // Still online, update timestamp
+        const now = new Date();
+        setLastOnlineTime(now);
+        setLastOnlineTimestamp(now);
+      }
+      
+      // Inform the WebView about connectivity changes
+      if (mapRef.current) {
+        mapRef.current.injectJavaScript(`
+          if (window.setConnectivity) {
+            window.setConnectivity(${state.isConnected ?? false});
+          }
+          true;
+        `);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOnline]);
 
   // Reset filters when map screen comes into focus
   useFocusEffect(
@@ -258,6 +298,57 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     }
   };
 
+  const handleGPSFindPress = async () => {
+    try {
+      // Use current location or cached location
+      let findLocation = null;
+      
+      if (location) {
+        // Use current GPS location if available
+        findLocation = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+      } else if (currentLocation) {
+        // Fallback to cached location from store
+        findLocation = currentLocation;
+      } else {
+        // No location available - show error
+        return;
+      }
+
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Set pending pin and show bottom sheet
+      setPendingPin(findLocation);
+      setShowQuickFindSheet(true);
+    } catch (error) {
+      console.error('Error getting GPS location for find:', error);
+      // Could show a toast or alert here
+    }
+  };
+
+  const handleRetryConnection = () => {
+    // Force a network state check
+    NetInfo.fetch().then(state => {
+      setIsOnline(state.isConnected ?? false);
+      if (state.isConnected) {
+        setLastOnlineTime(new Date());
+      }
+    });
+    
+    // Inject script to retry tile loading
+    if (mapRef.current) {
+      mapRef.current.injectJavaScript(`
+        if (window.retryTileLoading) {
+          window.retryTileLoading();
+        }
+        true;
+      `);
+    }
+  };
+
   if (errorMsg) {
     return (
       <SafeAreaView className="flex-1 bg-gray-100 justify-center items-center px-4">
@@ -285,16 +376,28 @@ export default function MapScreen({ navigation }: MapScreenProps) {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
+      {/* Offline Banner */}
+      <OfflineBanner 
+        isVisible={!isOnline}
+        lastOnlineTime={lastOnlineTime}
+        onRetry={handleRetryConnection}
+      />
+      
       <View className="flex-1">
         <SimpleMap
           mapRef={mapRef}
           style={{ flex: 1 }}
-          initialRegion={{
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
+          initialRegion={
+            // Use cached region if offline and no current location, otherwise use current location
+            (!isOnline && !location && lastMapRegion) 
+              ? lastMapRegion
+              : {
+                  latitude: location?.coords.latitude || lastMapRegion?.latitude || 51.5074,
+                  longitude: location?.coords.longitude || lastMapRegion?.longitude || -0.1278,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }
+          }
           showsUserLocation
           onPress={handleMapPress}
           onLongPress={handleMapLongPress}
@@ -332,6 +435,14 @@ export default function MapScreen({ navigation }: MapScreenProps) {
             className="bg-white rounded-full p-3 shadow-lg"
           >
             <Ionicons name="locate" size={24} color="#22c55e" />
+          </Pressable>
+
+          {/* GPS-based My Find Button */}
+          <Pressable
+            onPress={handleGPSFindPress}
+            className="bg-green-500 rounded-full p-3 shadow-lg"
+          >
+            <Ionicons name="add" size={24} color="white" />
           </Pressable>
 
           <Pressable

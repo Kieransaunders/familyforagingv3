@@ -1,4 +1,59 @@
-# Family Foraging App - Testing Report & Improvement Suggestions
+# Family Foraging App - Roadmap & Implementation Plan
+
+## 🎯 **PRIORITY 1: OFFLINE MAP UX IMPLEMENTATION**
+
+### Immediate UX (Quick Wins)
+
+#### 🔄 Offline Banner
+- **Status**: Pending
+- **Description**: Show persistent top banner "Offline — showing cached map" with "Retry" button and last-updated time
+- **Technical**: Use `@react-native-community/netinfo` in MapScreen to toggle offline banner
+- **Files**: `src/components/OfflineBanner.tsx`, `src/screens/MapScreen.tsx`
+
+#### 🗺️ Don't Blank the Map  
+- **Status**: Pending
+- **Description**: Keep WebView alive; show user dot, markers, and subtle grid/placeholder background if tiles fail
+- **Technical**: Add tileerror listeners in Leaflet script; show overlay instead of blank
+- **Files**: `src/components/SimpleMap.tsx`
+
+#### 📍 Last Region Fallback
+- **Status**: Pending  
+- **Description**: Persist last map region in Zustand; on startup offline, center to that region
+- **Technical**: Add `lastMapRegion` and `lastOnlineTimestamp` to foraging-store.ts
+- **Files**: `src/state/foraging-store.ts`, `src/screens/MapScreen.tsx`
+
+#### ❌ Clear Empty State
+- **Status**: Pending
+- **Description**: If zero tiles cached, show "No map tiles cached yet. Move around online to cache this area."
+- **Technical**: Detect cache status and show centered message with "Learn more" link
+- **Files**: `src/components/SimpleMap.tsx`
+
+#### 🎯 GPS-Based "My Find" Button
+- **Status**: Pending
+- **Description**: Add floating button to instantly log finds using current GPS location, even offline
+- **Technical**: New floating action button that works with cached/live GPS regardless of map tile availability
+- **Files**: `src/screens/MapScreen.tsx`
+
+### Near-Term Enhancements (1–2 Sprints)
+
+#### 📦 Local Leaflet Assets
+- **Status**: Pending
+- **Description**: Bundle Leaflet CSS/JS locally to avoid CDN failures
+- **Technical**: Replace CDN links in `generateMapHTML()` with locally bundled assets
+- **Files**: `src/components/SimpleMap.tsx`, `assets/` directory
+- **Notes**: Already have `leaflet@1.9.4` installed, need to bundle and reference locally
+
+#### 🔧 Tile Error Handling
+- **Status**: Pending
+- **Description**: Listen for `tileerror` in WebView and show overlay instead of blank background
+- **Technical**: Add Leaflet tileerror listeners, implement retry mechanism
+- **Files**: `src/components/SimpleMap.tsx`
+
+#### 💾 Passive Tile Caching
+- **Status**: Pending
+- **Description**: Cache visited tiles as users pan/zoom online (limit zoom levels and total size)
+- **Technical**: Integrate Leaflet offline plugin (e.g., leaflet-offline-tiles)
+- **Files**: `src/components/SimpleMap.tsx`
 
 ## ✅ **TESTING COMPLETED**
 
