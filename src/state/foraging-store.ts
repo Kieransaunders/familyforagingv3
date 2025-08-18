@@ -216,8 +216,14 @@ export const useForagingStore = create<ForagingState>()(
       loadPlantDatabase: () => {
         // Load plants asynchronously after initial render
         setTimeout(() => {
-          const plants = withInSeasonDefaults(getPlantsFromDatabase());
-          set({ plants });
+          const defaultPlants = withInSeasonDefaults(getPlantsFromDatabase());
+          set((state) => {
+            // Only load default plants if we don't have any custom plants
+            // Merge with existing plants, avoiding duplicates by ID
+            const existingIds = new Set(state.plants.map(p => p.id));
+            const newPlants = defaultPlants.filter(p => !existingIds.has(p.id));
+            return { plants: [...state.plants, ...newPlants] };
+          });
         }, 100);
       },
     }),

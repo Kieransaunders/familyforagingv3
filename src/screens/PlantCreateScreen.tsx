@@ -32,6 +32,17 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
   const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Smart category detection based on plant name
+  const detectCategory = (plantName: string): PlantCategory => {
+    const name = plantName.toLowerCase();
+    if (name.includes('berry') || name.includes('berries')) return 'berries';
+    if (name.includes('mushroom') || name.includes('fungi')) return 'mushrooms';
+    if (name.includes('nut') || name.includes('nuts')) return 'nuts';
+    if (name.includes('flower') || name.includes('blossom')) return 'flowers';
+    if (name.includes('root') || name.includes('bulb')) return 'roots';
+    return 'leaves'; // default
+  };
+
   // Form state
   const [name, setName] = useState('');
   const [latinName, setLatinName] = useState('');
@@ -40,6 +51,22 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
   const [heroImage, setHeroImage] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [conservationStatus, setConservationStatus] = useState<typeof CONSERVATION_STATUS[number]>('common');
+  const [categoryAutoSelected, setCategoryAutoSelected] = useState(true); // Track if category was auto-selected
+  
+  // Auto-update category based on plant name (only if not manually set)
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    if (categoryAutoSelected && !isEditing) {
+      const detectedCategory = detectCategory(newName);
+      setCategory(detectedCategory);
+    }
+  };
+
+  // When user manually selects category, disable auto-selection
+  const handleCategoryChange = (newCategory: PlantCategory) => {
+    setCategory(newCategory);
+    setCategoryAutoSelected(false);
+  };
   
   // Identification
   const [keyFeatures, setKeyFeatures] = useState<string[]>([]);
@@ -160,7 +187,7 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -204,15 +231,12 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return name.trim().length > 0 && latinName.trim().length > 0 && family.trim().length > 0;
+        return name.trim().length > 0; // Only name is required
       case 2:
-        return keyFeatures.length > 0 && habitat.length > 0 && size.trim().length > 0;
       case 3:
-        return preparation.length > 0;
       case 4:
-        return ethics.length > 0;
       case 5:
-        return true; // Optional step
+        return true; // All other steps are optional
       default:
         return false;
     }
@@ -224,19 +248,12 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
     switch (step) {
       case 1:
         if (!name.trim()) errors.push('Plant name is required');
-        if (!latinName.trim()) errors.push('Latin name is required');
-        if (!family.trim()) errors.push('Plant family is required');
         break;
       case 2:
-        if (keyFeatures.length === 0) errors.push('At least one key feature is required');
-        if (habitat.length === 0) errors.push('At least one habitat is required');
-        if (!size.trim()) errors.push('Size description is required');
-        break;
       case 3:
-        if (preparation.length === 0) errors.push('At least one preparation method is required');
-        break;
       case 4:
-        if (ethics.length === 0) errors.push('At least one foraging ethic is required');
+      case 5:
+        // All other steps are optional
         break;
     }
     
@@ -269,39 +286,38 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
   };
 
   const savePlant = async () => {
-    // Final validation
-    for (let step = 1; step <= 4; step++) {
-      if (!validateStep(step)) {
-        Alert.alert('Validation Error', `Please complete step ${step} correctly`);
-        setCurrentStep(step);
-        return;
-      }
+    // Final validation - only name is required
+    if (!validateStep(1)) {
+      Alert.alert('Validation Error', 'Plant name is required');
+      setCurrentStep(1);
+      return;
     }
 
     setIsSaving(true);
 
     try {
+      let createdPlantId: string | null = null;
       if (isEditing && editPlant) {
         // Update existing plant
         const updatedPlant: Plant = {
           ...editPlant,
           name: name.trim(),
-          latinName: latinName.trim(),
-          family: family.trim(),
+          latinName: latinName.trim() || 'Unknown',
+          family: family.trim() || 'Unknown',
           category,
           heroImage: heroImage || 'https://via.placeholder.com/400x300/22c55e/ffffff?text=Plant',
           images,
           conservationStatus,
           identification: {
-            keyFeatures: keyFeatures.filter(f => f.trim()),
-            habitat: habitat.filter(h => h.trim()),
+            keyFeatures: keyFeatures.filter(f => f.trim()).length > 0 ? keyFeatures.filter(f => f.trim()) : ['No key features specified'],
+            habitat: habitat.filter(h => h.trim()).length > 0 ? habitat.filter(h => h.trim()) : ['Habitat not specified'],
             season: season.filter(s => s.trim()),
             lookAlikes: lookAlikes.filter(l => l.trim()),
-            size: size.trim(),
+            size: size.trim() || 'Size not specified',
           },
           edibility: {
             safe,
-            preparation: preparation.filter(p => p.trim()),
+            preparation: preparation.filter(p => p.trim()).length > 0 ? preparation.filter(p => p.trim()) : ['Preparation method not specified'],
             warnings: warnings.filter(w => w.trim()),
             toxicParts: toxicParts.filter(t => t.trim()),
           },
@@ -311,7 +327,7 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
             traditional: traditional.filter(t => t.trim()),
             recipes: editPlant.uses.recipes || [],
           },
-          ethics: ethics.filter(e => e.trim()),
+          ethics: ethics.filter(e => e.trim()).length > 0 ? ethics.filter(e => e.trim()) : ['Foraging ethics not specified'],
           funFacts: funFacts.trim() || undefined,
           inSeason,
         };
@@ -319,25 +335,26 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
         updatePlant(editPlant.id, updatedPlant);
       } else {
         // Create new plant
+        const newPlantId = uuidv4();
         const newPlant: Plant = {
-          id: uuidv4(),
+          id: newPlantId,
           name: name.trim(),
-          latinName: latinName.trim(),
-          family: family.trim(),
+          latinName: latinName.trim() || 'Unknown',
+          family: family.trim() || 'Unknown',
           category,
           heroImage: heroImage || 'https://via.placeholder.com/400x300/22c55e/ffffff?text=Plant',
           images,
           conservationStatus,
           identification: {
-            keyFeatures: keyFeatures.filter(f => f.trim()),
-            habitat: habitat.filter(h => h.trim()),
+            keyFeatures: keyFeatures.filter(f => f.trim()).length > 0 ? keyFeatures.filter(f => f.trim()) : ['No key features specified'],
+            habitat: habitat.filter(h => h.trim()).length > 0 ? habitat.filter(h => h.trim()) : ['Habitat not specified'],
             season: season.filter(s => s.trim()),
             lookAlikes: lookAlikes.filter(l => l.trim()),
-            size: size.trim(),
+            size: size.trim() || 'Size not specified',
           },
           edibility: {
             safe,
-            preparation: preparation.filter(p => p.trim()),
+            preparation: preparation.filter(p => p.trim()).length > 0 ? preparation.filter(p => p.trim()) : ['Preparation method not specified'],
             warnings: warnings.filter(w => w.trim()),
             toxicParts: toxicParts.filter(t => t.trim()),
           },
@@ -347,12 +364,13 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
             traditional: traditional.filter(t => t.trim()),
             recipes: [],
           },
-          ethics: ethics.filter(e => e.trim()),
+          ethics: ethics.filter(e => e.trim()).length > 0 ? ethics.filter(e => e.trim()) : ['Foraging ethics not specified'],
           funFacts: funFacts.trim() || undefined,
           inSeason,
         };
 
         addPlant(newPlant);
+        createdPlantId = newPlantId;
       }
 
       const plantName = name.trim();
@@ -380,7 +398,11 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
             {
               text: 'View Plant',
               onPress: () => {
-                navigation.replace('PlantDetail', { plantId: uuidv4() });
+                if (createdPlantId) {
+                  navigation.replace('PlantDetail', { plantId: createdPlantId });
+                } else {
+                  navigation.goBack();
+                }
               }
             },
             {
@@ -442,7 +464,7 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
               <Text className="text-sm font-medium text-gray-700 mb-2">Plant Name *</Text>
               <TextInput
                 value={name}
-                onChangeText={setName}
+                onChangeText={handleNameChange}
                 placeholder="e.g., Wild Garlic"
                 className="bg-white rounded-xl px-4 py-3 text-gray-900 shadow-sm"
                 placeholderTextColor="#9ca3af"
@@ -450,22 +472,22 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
             </View>
 
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Latin Name *</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Latin Name</Text>
               <TextInput
                 value={latinName}
                 onChangeText={setLatinName}
-                placeholder="e.g., Allium ursinum"
+                placeholder="e.g., Allium ursinum (optional)"
                 className="bg-white rounded-xl px-4 py-3 text-gray-900 shadow-sm"
                 placeholderTextColor="#9ca3af"
               />
             </View>
 
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Family *</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Family</Text>
               <TextInput
                 value={family}
                 onChangeText={setFamily}
-                placeholder="e.g., Amaryllidaceae"
+                placeholder="e.g., Amaryllidaceae (optional)"
                 className="bg-white rounded-xl px-4 py-3 text-gray-900 shadow-sm"
                 placeholderTextColor="#9ca3af"
               />
@@ -477,7 +499,7 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
                 {CATEGORIES.map((cat) => (
                   <Pressable
                     key={cat}
-                    onPress={() => setCategory(cat)}
+                    onPress={() => handleCategoryChange(cat)}
                     className={cn(
                       "px-4 py-2 rounded-full border",
                       category === cat
@@ -586,11 +608,11 @@ export default function PlantCreateScreen({ navigation, route }: PlantCreateScre
             />
 
             <View className="mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">Size Description *</Text>
+              <Text className="text-sm font-medium text-gray-700 mb-2">Size Description</Text>
               <TextInput
                 value={size}
                 onChangeText={setSize}
-                placeholder="e.g., Up to 50cm tall with 2-5cm wide leaves"
+                placeholder="e.g., Up to 50cm tall with 2-5cm wide leaves (optional)"
                 className="bg-white rounded-xl px-4 py-3 text-gray-900 shadow-sm"
                 placeholderTextColor="#9ca3af"
                 multiline

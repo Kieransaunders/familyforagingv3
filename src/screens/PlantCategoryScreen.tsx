@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getPlantsByCategory, PLANTS } from '../data/plants';
 import { PlantCategory } from '../types/plant';
+import { useForagingStore } from '../state/foraging-store';
 
 interface PlantCategoryScreenProps {
   navigation: any;
@@ -12,14 +13,10 @@ interface PlantCategoryScreenProps {
 
 export default function PlantCategoryScreen({ navigation, route }: PlantCategoryScreenProps) {
   const { category }: { category: PlantCategory } = route.params;
-  const originalPlants = getPlantsByCategory(category);
+  const { plants: storePlants } = useForagingStore();
   
-  // Get plants from comprehensive database
-  const comprehensivePlants = PLANTS.filter(plant => plant.category === category);
-  
-  // Combine both datasets for now (you can choose to use only one later)
-  const allPlants = [...comprehensivePlants];
-  const plants = allPlants;
+  // Filter plants from the store by category (includes both default and user-created plants)
+  const plants = storePlants.filter(plant => plant.category === category);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -134,7 +131,7 @@ export default function PlantCategoryScreen({ navigation, route }: PlantCategory
                 <View className="px-4 pb-3">
                   <Text className="text-xs text-gray-500 mb-1">Key features:</Text>
                   <Text className="text-xs text-gray-700" numberOfLines={2}>
-                    {plant.identification.slice(0, 2).join(' • ')}
+                    {plant.identification.keyFeatures.slice(0, 2).join(' • ')}
                   </Text>
                 </View>
               </Pressable>
