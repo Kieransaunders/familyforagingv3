@@ -154,62 +154,135 @@ export default function RecipeCreateScreen({ navigation, route }: RecipeCreateSc
     setIsSaving(true);
 
     try {
-      const newRecipe: Recipe = {
-        id: uuidv4(),
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        difficulty,
-        prepTime: parseInt(prepTime) || 0,
-        cookTime: parseInt(cookTime) || 0,
-        servings: parseInt(servings) || 1,
-        ingredients: ingredients.filter(i => i.trim()),
-        instructions: instructions.filter(i => i.trim()),
-        season: selectedSeasons,
-        requiredFinds: requiredFinds.filter(f => f.trim()),
-        tags: tags.filter(t => t.trim()),
-        userNotes: userNotes.trim() || undefined,
-      };
+      if (isEditing && editRecipe) {
+        // Update existing recipe
+        const updatedRecipe: Recipe = {
+          ...editRecipe,
+          title: title.trim(),
+          description: description.trim(),
+          category,
+          difficulty,
+          prepTime: parseInt(prepTime) || 0,
+          cookTime: parseInt(cookTime) || 0,
+          servings: parseInt(servings) || 1,
+          ingredients: ingredients.filter(i => i.trim()),
+          instructions: instructions.filter(i => i.trim()),
+          season: selectedSeasons,
+          requiredFinds: requiredFinds.filter(f => f.trim()),
+          tags: tags.filter(t => t.trim()),
+          userNotes: userNotes.trim() || undefined,
+        };
 
-      addRecipe(newRecipe);
+        updateRecipe(editRecipe.id, updatedRecipe);
+      } else {
+        // Create new recipe
+        const newRecipe: Recipe = {
+          id: uuidv4(),
+          title: title.trim(),
+          description: description.trim(),
+          category,
+          difficulty,
+          prepTime: parseInt(prepTime) || 0,
+          cookTime: parseInt(cookTime) || 0,
+          servings: parseInt(servings) || 1,
+          ingredients: ingredients.filter(i => i.trim()),
+          instructions: instructions.filter(i => i.trim()),
+          season: selectedSeasons,
+          requiredFinds: requiredFinds.filter(f => f.trim()),
+          tags: tags.filter(t => t.trim()),
+          userNotes: userNotes.trim() || undefined,
+        };
 
-      Alert.alert(
-        'Recipe Created!',
-        `"${newRecipe.title}" has been added to your recipes.`,
-        [
-          {
-            text: 'View Recipe',
-            onPress: () => {
-              navigation.replace('RecipeDetail', { recipe: newRecipe });
+        addRecipe(newRecipe);
+      }
+
+      const recipeTitle = isEditing ? title.trim() : title.trim();
+      const alertTitle = isEditing ? 'Recipe Updated!' : 'Recipe Created!';
+      const alertMessage = isEditing 
+        ? `"${recipeTitle}" has been updated successfully.`
+        : `"${recipeTitle}" has been added to your recipes.`;
+      
+      const buttons = isEditing 
+        ? [
+            {
+              text: 'View Recipe',
+              onPress: () => {
+                const updatedRecipe: Recipe = {
+                  ...editRecipe!,
+                  title: recipeTitle,
+                  description: description.trim(),
+                  category,
+                  difficulty,
+                  prepTime: parseInt(prepTime) || 0,
+                  cookTime: parseInt(cookTime) || 0,
+                  servings: parseInt(servings) || 1,
+                  ingredients: ingredients.filter(i => i.trim()),
+                  instructions: instructions.filter(i => i.trim()),
+                  season: selectedSeasons,
+                  requiredFinds: requiredFinds.filter(f => f.trim()),
+                  tags: tags.filter(t => t.trim()),
+                  userNotes: userNotes.trim() || undefined,
+                };
+                navigation.replace('RecipeDetail', { recipe: updatedRecipe });
+              }
+            },
+            {
+              text: 'Done',
+              style: 'default' as const,
+              onPress: () => navigation.goBack()
             }
-          },
-          {
-            text: 'Create Another',
-            onPress: () => {
-              // Reset form
-              setCurrentStep(1);
-              setTitle('');
-              setDescription('');
-              setCategory('meals');
-              setDifficulty('easy');
-              setPrepTime('0');
-              setCookTime('0');
-              setServings('1');
-              setIngredients([]);
-              setInstructions([]);
-              setSelectedSeasons([]);
-              setRequiredFinds([]);
-              setTags([]);
-              setUserNotes('');
+          ]
+        : [
+            {
+              text: 'View Recipe',
+              onPress: () => {
+                const createdRecipe: Recipe = {
+                  id: uuidv4(),
+                  title: recipeTitle,
+                  description: description.trim(),
+                  category,
+                  difficulty,
+                  prepTime: parseInt(prepTime) || 0,
+                  cookTime: parseInt(cookTime) || 0,
+                  servings: parseInt(servings) || 1,
+                  ingredients: ingredients.filter(i => i.trim()),
+                  instructions: instructions.filter(i => i.trim()),
+                  season: selectedSeasons,
+                  requiredFinds: requiredFinds.filter(f => f.trim()),
+                  tags: tags.filter(t => t.trim()),
+                  userNotes: userNotes.trim() || undefined,
+                };
+                navigation.replace('RecipeDetail', { recipe: createdRecipe });
+              }
+            },
+            {
+              text: 'Create Another',
+              onPress: () => {
+                // Reset form
+                setCurrentStep(1);
+                setTitle('');
+                setDescription('');
+                setCategory('meals');
+                setDifficulty('easy');
+                setPrepTime('0');
+                setCookTime('0');
+                setServings('1');
+                setIngredients([]);
+                setInstructions([]);
+                setSelectedSeasons([]);
+                setRequiredFinds([]);
+                setTags([]);
+                setUserNotes('');
+              }
+            },
+            {
+              text: 'Done',
+              style: 'default' as const,
+              onPress: () => navigation.goBack()
             }
-          },
-          {
-            text: 'Done',
-            style: 'default',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+          ];
+
+      Alert.alert(alertTitle, alertMessage, buttons);
 
     } catch (error) {
       Alert.alert('Error', 'Failed to save recipe. Please try again.');
@@ -476,7 +549,9 @@ export default function RecipeCreateScreen({ navigation, route }: RecipeCreateSc
             <Pressable onPress={() => navigation.goBack()} className="mr-3">
               <Ionicons name="close" size={24} color="#374151" />
             </Pressable>
-            <Text className="text-lg font-semibold text-gray-900">Create Recipe</Text>
+            <Text className="text-lg font-semibold text-gray-900">
+              {isEditing ? 'Edit Recipe' : 'Create Recipe'}
+            </Text>
           </View>
           <Text className="text-sm text-gray-500">
             {currentStep} of {STEPS.length}
@@ -564,7 +639,9 @@ export default function RecipeCreateScreen({ navigation, route }: RecipeCreateSc
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={20} color="white" />
-                  <Text className="text-white font-medium ml-2">Save Recipe</Text>
+                  <Text className="text-white font-medium ml-2">
+                    {isEditing ? 'Update Recipe' : 'Save Recipe'}
+                  </Text>
                 </>
               )}
             </Pressable>

@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useForagingStore } from '../state/foraging-store';
-import { MonthFlags, Plant } from '../types/plant';
+import { Plant } from '../types/plant';
 
 interface PlantDetailScreenProps {
   navigation: any;
@@ -13,23 +12,10 @@ interface PlantDetailScreenProps {
 
 export default function PlantDetailScreen({ navigation, route }: PlantDetailScreenProps) {
   const { plantId } = route.params;
-  const { plants, updatePlant, deletePlant } = useForagingStore();
+  const { plants, deletePlant } = useForagingStore();
   const plant = useMemo(() => plants.find(p => p.id === plantId), [plants, plantId]);
   const [expandedSections, setExpandedSections] = useState<string[]>(['identification']);
-  const [isEditing, setIsEditing] = useState(false);
-  const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
-  const [months, setMonths] = useState<MonthFlags>({
-    jan: false, feb: false, mar: false, apr: false, may: false, jun: false,
-    jul: false, aug: false, sep: false, oct: false, nov: false, dec: false,
-  });
-  const [images, setImages] = useState<string[]>([]);
 
-  React.useEffect(() => {
-    if (plant) {
-      setMonths(plant.inSeason || months);
-      setImages(plant.images || []);
-    }
-  }, [plant?.id]);
 
   if (!plant) {
     return (
@@ -139,34 +125,68 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="flex-1">
         {/* Hero Image */}
-        <View className="relative">
+        <View style={{ height: 256, position: 'relative' }}>
           <Image
-            source={{ uri: plant.heroImage }}
-            className="w-full h-64"
+            source={{ uri: plant.heroImage || 'https://via.placeholder.com/400x300/22c55e/ffffff?text=Plant' }}
+            style={{ 
+              width: '100%', 
+              height: '100%',
+              backgroundColor: '#22c55e' // Green fallback background
+            }}
             resizeMode="cover"
           />
-          <View className="absolute inset-0 bg-black bg-opacity-30" />
-          <View className="absolute bottom-0 left-0 right-0 p-6">
-            <Text className="text-white text-3xl font-bold">{plant.name}</Text>
-            <Text className="text-white text-lg italic">{plant.latinName}</Text>
-            <View className="flex-row items-center mt-2">
+          <View 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.4)'
+            }}
+          />
+          <View 
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: 24
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>{plant.name}</Text>
+            <Text style={{ color: 'white', fontSize: 18, fontStyle: 'italic' }}>{plant.latinName}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
               <View 
-                className="px-3 py-1 rounded-full"
-                style={{ backgroundColor: getCategoryColor(plant.category) }}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  borderRadius: 20,
+                  backgroundColor: getCategoryColor(plant.category)
+                }}
               >
-                <Text className="text-white text-sm font-medium capitalize">
+                <Text style={{ color: 'white', fontSize: 14, fontWeight: '500', textTransform: 'capitalize' }}>
                   {plant.category}
                 </Text>
               </View>
               {plant.conservationStatus && (
-                <View className="px-3 py-1 rounded-full bg-blue-500 ml-2">
-                  <Text className="text-white text-sm font-medium capitalize">
+                <View 
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    borderRadius: 20,
+                    backgroundColor: '#3b82f6',
+                    marginLeft: 8
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 14, fontWeight: '500', textTransform: 'capitalize' }}>
                     {plant.conservationStatus}
                   </Text>
                 </View>
               )}
             </View>
           </View>
+          
         </View>
 
         {/* Action Buttons */}
@@ -181,10 +201,15 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
           
           <Pressable
             onPress={() => {
-              // Navigate to recipes tab and search for this plant
+              // Set search query for recipes
               const { setSearchQuery } = useForagingStore.getState();
               setSearchQuery(plant.name);
+              
+              // Use the same pattern as other screens - get parent tab navigator
               const tabNavigation = navigation.getParent();
+              
+              // Close modal and navigate
+              navigation.goBack();
               tabNavigation?.navigate('Recipes');
             }}
             className="flex-1 bg-blue-500 rounded-xl py-3 flex-row items-center justify-center"
@@ -194,10 +219,10 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
           </Pressable>
 
           <Pressable
-            onPress={() => setIsEditing(!isEditing)}
-            className="w-12 bg-gray-800 rounded-xl items-center justify-center"
+            onPress={() => navigation.navigate('PlantCreate', { editPlant: plant })}
+            className="w-12 bg-blue-500 rounded-xl items-center justify-center"
           >
-            <Ionicons name={isEditing ? 'close' : 'create'} size={20} color="white" />
+            <Ionicons name="create" size={20} color="white" />
           </Pressable>
 
           <Pressable
@@ -208,96 +233,6 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
           </Pressable>
         </View>
 
-        {/* Edit Panel */}
-        {isEditing && (
-          <View className="px-4">
-            <View className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
-              <Text className="text-lg font-semibold text-gray-900 mb-3">In Season Months</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const).map((label, idx) => {
-                  const key = monthKeys[idx];
-                  const active = (months as any)[key];
-                  return (
-                    <Pressable
-                      key={label}
-                      onPress={() => setMonths({ ...months, [key]: !active } as MonthFlags)}
-                      className={active ? 'px-3 py-2 rounded-full bg-green-500' : 'px-3 py-2 rounded-full bg-gray-100'}
-                    >
-                      <Text className={active ? 'text-white font-medium' : 'text-gray-700 font-medium'}>{label}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <View className="flex-row flex-wrap gap-2 mt-3">
-                {[{label:'Spring', months:[2,3,4]},{label:'Summer', months:[5,6,7]},{label:'Autumn', months:[8,9,10]},{label:'Winter', months:[11,0,1]}].map((preset) => (
-                  <Pressable
-                    key={preset.label}
-                    onPress={() => {
-                      const next: any = { ...months };
-                      preset.months.forEach(m=>{ next[monthKeys[m]] = true; });
-                      setMonths(next as MonthFlags);
-                    }}
-                    className="px-3 py-2 rounded-full bg-gray-100"
-                  >
-                    <Text className="text-gray-700 font-medium">{preset.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <View className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
-              <Text className="text-lg font-semibold text-gray-900 mb-3">Photos</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">
-                {images.map((uri, idx) => (
-                  <View key={idx} className="mx-1 items-center">
-                    <Image source={{ uri }} className="w-24 h-24 rounded-lg" resizeMode="cover" />
-                    <View className="flex-row mt-2 gap-2">
-                      <Pressable onPress={() => setImages(images.filter((_,i)=>i!==idx))} className="px-2 py-1 rounded bg-red-100">
-                        <Text className="text-red-700 text-xs">Remove</Text>
-                      </Pressable>
-                      <Pressable onPress={() => updatePlant(plant.id, { heroImage: uri })} className="px-2 py-1 rounded bg-blue-100">
-                        <Text className="text-blue-700 text-xs">Make cover</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ))}
-                <Pressable
-                  onPress={async () => {
-                    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
-                    if (!res.canceled && res.assets?.[0]?.uri) {
-                      setImages([...images, res.assets[0].uri]);
-                    }
-                  }}
-                  className="w-24 h-24 rounded-lg bg-gray-100 items-center justify-center ml-2"
-                >
-                  <Ionicons name="add" size={24} color="#6b7280" />
-                </Pressable>
-              </ScrollView>
-            </View>
-
-            <View className="flex-row gap-3 mb-4">
-              <Pressable
-                onPress={() => {
-                  updatePlant(plant.id, { inSeason: months, images });
-                  setIsEditing(false);
-                }}
-                className="flex-1 bg-green-500 rounded-xl py-3 items-center"
-              >
-                <Text className="text-white font-semibold">Save Changes</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setMonths(plant.inSeason || months);
-                  setImages(plant.images || []);
-                  setIsEditing(false);
-                }}
-                className="flex-1 bg-gray-200 rounded-xl py-3 items-center"
-              >
-                <Text className="text-gray-800 font-semibold">Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
 
         {/* Content Sections */}
         <View className="px-4 pb-6">

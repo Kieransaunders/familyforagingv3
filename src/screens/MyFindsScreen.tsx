@@ -54,12 +54,12 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'plant': return '#22c55e';
-      case 'fungi': return '#f59e0b';
-      case 'berry': return '#ef4444';
-      case 'nut': return '#8b5cf6';
-      case 'herb': return '#06b6d4';
-      default: return '#6b7280';
+      case 'plant': return '#22c55e'; // Green
+      case 'fungi': return '#8b4513'; // Brown  
+      case 'berry': return '#ef4444'; // Red
+      case 'nut': return '#deb887';   // Light brown/burlywood
+      case 'herb': return '#9caf88';  // Sage green
+      default: return '#6b7280';      // Gray for 'other'
     }
   };
 

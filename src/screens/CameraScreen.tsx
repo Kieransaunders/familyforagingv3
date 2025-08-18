@@ -54,9 +54,17 @@ export default function CameraScreen({ navigation, route }: CameraScreenProps) {
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
-        const photo = await (cameraRef.current as any).takePictureAsync({
+        // Request media library permissions
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Required', 'Photo library access is needed to save photos');
+          return;
+        }
+
+        const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
           base64: false,
+          skipProcessing: false,
         });
         
         if (photo) {

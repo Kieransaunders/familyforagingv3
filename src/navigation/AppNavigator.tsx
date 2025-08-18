@@ -20,6 +20,7 @@ import PlantDatabaseScreen from '../screens/PlantDatabaseScreen';
 import PlantDetailScreen from '../screens/PlantDetailScreen';
 import PlantCategoryScreen from '../screens/PlantCategoryScreen';
 import PlantImportScreen from '../screens/PlantImportScreen';
+import PlantCreateScreen from '../screens/PlantCreateScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -150,6 +151,15 @@ function MyFindsStack() {
           presentation: 'modal',
         })} 
       />
+      <Stack.Screen 
+        name="Camera" 
+        component={CameraScreen} 
+        options={{ 
+          title: 'Take Photo',
+          presentation: 'fullScreenModal',
+          headerShown: false,
+        }} 
+      />
     </Stack.Navigator>
   );
 }
@@ -185,6 +195,24 @@ function PlantStack() {
         options={{ 
           title: 'Import Plants',
           presentation: 'modal',
+        }} 
+      />
+      <Stack.Screen 
+        name="PlantCreate" 
+        component={PlantCreateScreen} 
+        options={{ 
+          title: 'Add Plant',
+          presentation: 'modal',
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="Camera" 
+        component={CameraScreen} 
+        options={{ 
+          title: 'Take Photo',
+          presentation: 'fullScreenModal',
+          headerShown: false,
         }} 
       />
     </Stack.Navigator>

@@ -3,7 +3,7 @@
     "name": "Family Foraging",
     "slug": "family-foraging",
     "scheme": "family-foraging",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -52,7 +52,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/ecff25e1-0147-407c-97e0-57253c02562b"
+      "enabled": false
     }
   }
 }

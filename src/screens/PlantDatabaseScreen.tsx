@@ -103,18 +103,30 @@ export default function PlantDatabaseScreen({ navigation }: PlantDatabaseScreenP
         </View>
 
         <ScrollView className="flex-1">
-          {/* Import Button Section */}
+          {/* Action Buttons Section */}
           {(!showSearch || searchQuery.length === 0) && (
             <View className="px-4 py-4">
-              <Pressable
-                onPress={() => navigation.navigate('PlantImport')}
-                className="bg-green-500 rounded-xl p-4 flex-row items-center justify-center shadow-sm mb-4"
-              >
-                <Ionicons name="cloud-upload" size={20} color="white" />
-                <Text className="text-white font-semibold ml-2">
-                  Import Plants from CSV
-                </Text>
-              </Pressable>
+              <View className="flex-row gap-3 mb-4">
+                <Pressable
+                  onPress={() => navigation.navigate('PlantCreate')}
+                  className="flex-1 bg-blue-500 rounded-xl p-4 flex-row items-center justify-center shadow-sm"
+                >
+                  <Ionicons name="add-circle" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">
+                    Add Plant
+                  </Text>
+                </Pressable>
+                
+                <Pressable
+                  onPress={() => navigation.navigate('PlantImport')}
+                  className="flex-1 bg-green-500 rounded-xl p-4 flex-row items-center justify-center shadow-sm"
+                >
+                  <Ionicons name="cloud-upload" size={20} color="white" />
+                  <Text className="text-white font-semibold ml-2">
+                    Import CSV
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           )}
 
