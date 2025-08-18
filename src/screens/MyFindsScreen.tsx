@@ -12,7 +12,7 @@ interface MyFindsScreenProps {
 }
 
 export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
-  const { finds, recipes, setSearchQuery: setGlobalSearchQuery } = useForagingStore();
+  const { finds, getAllRecipes, setSearchQuery: setGlobalSearchQuery } = useForagingStore();
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'category'>('date');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [localSearchQuery, setLocalSearchQuery] = useState('');
@@ -80,7 +80,7 @@ export default function MyFindsScreen({ navigation }: MyFindsScreenProps) {
   };
 
   const renderFindCard = (find: ForagingFind) => {
-    const relatedRecipes = recipes.filter(recipe => 
+    const relatedRecipes = getAllRecipes().filter(recipe => 
       recipe.requiredFinds.some(ingredient => 
         ingredient.toLowerCase().includes(find.name.toLowerCase()) ||
         find.name.toLowerCase().includes(ingredient.toLowerCase())

@@ -14,12 +14,12 @@ export default function RecipeScreen({ navigation }: RecipeScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSeason, setSelectedSeason] = useState<string>('all');
   
-  const { recipes, favoriteRecipes, toggleFavoriteRecipe, finds, searchQuery, setSearchQuery } = useForagingStore();
+  const { getAllRecipes, favoriteRecipes, toggleFavoriteRecipe, finds, searchQuery, setSearchQuery } = useForagingStore();
 
   const categories = ['all', 'drinks', 'meals', 'preserves', 'medicinal'];
   const seasons = ['all', 'spring', 'summer', 'autumn', 'winter'];
 
-  const filteredRecipes = recipes.filter(recipe => {
+  const filteredRecipes = getAllRecipes().filter(recipe => {
     // Category filter
     if (selectedCategory !== 'all' && recipe.category !== selectedCategory) {
       return false;
@@ -195,6 +195,44 @@ export default function RecipeScreen({ navigation }: RecipeScreenProps) {
               </Text>
             </Pressable>
           </View>
+
+          {/* Developer Tools (Only in DEV mode) */}
+          {__DEV__ && (
+            <View className="border-t border-gray-200 pt-3 mb-4">
+              <Text className="text-xs text-gray-500 mb-2">Developer Tools</Text>
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={() => {
+                    const { seedRecipesFromCode, getAllRecipes } = useForagingStore.getState();
+                    seedRecipesFromCode();
+                    const count = getAllRecipes().filter(r => r.id.startsWith('db:')).length;
+                    alert(`✅ Built-in recipes refreshed (${count} recipes loaded)`);
+                  }}
+                  className="flex-1 bg-purple-500 rounded-lg px-3 py-2 flex-row items-center justify-center"
+                >
+                  <Ionicons name="refresh-circle" size={16} color="white" />
+                  <Text className="text-white text-xs font-semibold ml-1">
+                    Seed Recipes
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    const { getAllRecipes } = useForagingStore.getState();
+                    const allRecipes = getAllRecipes();
+                    const builtIn = allRecipes.filter(r => r.id.startsWith('db:')).length;
+                    const user = allRecipes.filter(r => r.id.startsWith('usr:')).length;
+                    alert(`📊 Recipes: ${builtIn} built-in, ${user} user-created`);
+                  }}
+                  className="flex-1 bg-gray-500 rounded-lg px-3 py-2 flex-row items-center justify-center"
+                >
+                  <Ionicons name="stats-chart" size={16} color="white" />
+                  <Text className="text-white text-xs font-semibold ml-1">
+                    Stats
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
 
           {/* Category Filter */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">

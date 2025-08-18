@@ -54,25 +54,61 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
 
 
   const handleEditRecipe = () => {
-    navigation.navigate('RecipeCreate', { editRecipe: recipe });
+    if (recipe.id.startsWith('db:')) {
+      Alert.alert(
+        'Copy Built-in Recipe',
+        'This is a built-in recipe. You can create a custom copy to edit.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Create Copy', 
+            onPress: () => {
+              navigation.navigate('RecipeCreate', { 
+                editRecipe: { ...recipe, id: `usr:${recipe.title.toLowerCase().replace(/\s+/g, '-')}-copy` }
+              });
+            }
+          }
+        ]
+      );
+    } else {
+      navigation.navigate('RecipeCreate', { editRecipe: recipe });
+    }
   };
 
   const handleDeleteRecipe = () => {
-    Alert.alert(
-      'Delete Recipe',
-      'Are you sure you want to delete this recipe? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteRecipe(recipe.id);
-            navigation.goBack();
+    if (recipe.id.startsWith('db:')) {
+      Alert.alert(
+        'Cannot Delete Built-in Recipe',
+        'This is a built-in recipe that cannot be deleted. Would you like to create a custom copy that you can edit?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Create Copy', 
+            onPress: () => {
+              navigation.navigate('RecipeCreate', { 
+                editRecipe: { ...recipe, id: `usr:${recipe.title.toLowerCase().replace(/\s+/g, '-')}-copy` }
+              });
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Delete Recipe',
+        'Are you sure you want to delete this recipe? This action cannot be undone.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              deleteRecipe(recipe.id);
+              navigation.goBack();
+            }
+          }
+        ]
+      );
+    }
   };
 
   return (
@@ -82,9 +118,16 @@ export default function RecipeDetailScreen({ navigation, route }: RecipeDetailSc
         <View className="bg-white px-4 py-6 shadow-sm">
           <View className="flex-row justify-between items-start mb-4">
             <View className="flex-1">
-              <Text className="text-2xl font-bold text-gray-900 mb-2">
-                {recipe.title}
-              </Text>
+              <View className="flex-row items-center mb-2">
+                <Text className="text-2xl font-bold text-gray-900">
+                  {recipe.title}
+                </Text>
+                {recipe.id.startsWith('db:') && (
+                  <View className="bg-blue-100 px-2 py-1 rounded ml-2">
+                    <Text className="text-blue-800 text-xs font-semibold">BUILT-IN</Text>
+                  </View>
+                )}
+              </View>
               <Text className="text-gray-600 text-base leading-relaxed">
                 {recipe.description}
               </Text>

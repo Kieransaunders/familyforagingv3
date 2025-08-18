@@ -13,10 +13,10 @@ interface PlantCategoryScreenProps {
 
 export default function PlantCategoryScreen({ navigation, route }: PlantCategoryScreenProps) {
   const { category }: { category: PlantCategory } = route.params;
-  const { plants: storePlants } = useForagingStore();
+  const { getAllPlants } = useForagingStore();
   
-  // Filter plants from the store by category (includes both default and user-created plants)
-  const plants = storePlants.filter(plant => plant.category === category);
+  // Filter plants from the store by category (includes both built-in and user-created plants)
+  const plants = getAllPlants().filter(plant => plant.category === category);
 
   const getCategoryColor = (category: string) => {
     switch (category) {

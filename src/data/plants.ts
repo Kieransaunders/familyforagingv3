@@ -18,7 +18,7 @@ export type PlantDatabase = {
 export const PLANTS: PlantDatabase[] = [
   // --- SPRING ---
   {
-    id: "nettle",
+    id: "db:nettle",
     name: "Nettle",
     latinName: "Urtica dioica",
     category: "leaves",
@@ -42,7 +42,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [3, 4, 5, 6], // March through June - best when young
   },
   {
-    id: "dandelion-db",
+    id: "db:dandelion",
     name: "Dandelion",
     latinName: "Taraxacum officinale",
     category: "leaves",
@@ -70,7 +70,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September - young leaves best in spring
   },
   {
-    id: "wild-garlic-db",
+    id: "db:wild-garlic",
     name: "Wild Garlic",
     latinName: "Allium ursinum",
     category: "leaves",
@@ -94,7 +94,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [3, 4, 5], // March, April, May - prime wild garlic season
   },
   {
-    id: "goosefoot",
+    id: "db:goosefoot",
     name: "Goosefoot",
     latinName: "Chenopodium album",
     category: "leaves",
@@ -118,7 +118,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [4, 5, 6, 7, 8], // April through August - young shoots
   },
   {
-    id: "chickweed",
+    id: "db:chickweed",
     name: "Chickweed",
     latinName: "Stellaria media",
     category: "leaves",
@@ -141,7 +141,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September
   },
   {
-    id: "spearmint",
+    id: "db:spearmint",
     name: "Spearmint",
     latinName: "Mentha spicata",
     category: "leaves",
@@ -164,7 +164,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [4, 5, 6, 7, 8, 9], // April through September
   },
   {
-    id: "plantain",
+    id: "db:plantain",
     name: "Plantain",
     latinName: "Plantago major",
     category: "leaves",
@@ -189,7 +189,7 @@ export const PLANTS: PlantDatabase[] = [
 
   // --- SUMMER ---
   {
-    id: "wild-cherry",
+    id: "db:wild-cherry",
     name: "Wild Cherry",
     latinName: "Prunus avium",
     category: "berries",
@@ -213,7 +213,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [6, 7], // June, July - early summer cherries
   },
   {
-    id: "elder-db",
+    id: "db:elder",
     name: "Elder",
     latinName: "Sambucus nigra",
     category: "berries",
@@ -237,7 +237,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [5, 6, 7, 8, 9], // May-July for flowers, August-September for berries
   },
   {
-    id: "bilberry",
+    id: "db:bilberry",
     name: "Bilberry",
     latinName: "Vaccinium myrtillus",
     category: "berries",
@@ -260,7 +260,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [7, 8, 9], // July through September
   },
   {
-    id: "marsh-samphire",
+    id: "db:marsh-samphire",
     name: "Marsh Samphire",
     latinName: "Salicornia europaea",
     category: "leaves",
@@ -284,7 +284,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [7, 8, 9], // July through September
   },
   {
-    id: "common-sorrel",
+    id: "db:common-sorrel",
     name: "Common Sorrel",
     latinName: "Rumex acetosa",
     category: "leaves",
@@ -308,7 +308,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [4, 5, 6, 7, 8], // April through August
   },
   {
-    id: "giant-puffball",
+    id: "db:giant-puffball",
     name: "Giant Puffball",
     latinName: "Calvatia gigantea",
     category: "mushrooms",
@@ -332,7 +332,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [6, 7, 8, 9, 10], // June through October
   },
   {
-    id: "wild-radish",
+    id: "db:wild-radish",
     name: "Wild Radish",
     latinName: "Raphanus raphanistrum",
     category: "roots",
@@ -356,7 +356,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [4, 5, 6, 7, 8], // April through August
   },
   {
-    id: "woodland-strawberry",
+    id: "db:woodland-strawberry",
     name: "Woodland Strawberry",
     latinName: "Fragaria vesca",
     category: "berries",
@@ -379,7 +379,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [6, 7, 8], // June through August
   },
   {
-    id: "wild-plum",
+    id: "db:wild-plum",
     name: "Wild Plum",
     latinName: "Prunus domestica subsp. insititia",
     category: "berries",
@@ -403,7 +403,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [7, 8, 9], // July through September
   },
   {
-    id: "blackberry-db",
+    id: "db:blackberry",
     name: "Blackberry",
     latinName: "Rubus fruticosus agg.",
     category: "berries",
@@ -428,7 +428,7 @@ export const PLANTS: PlantDatabase[] = [
 
   // --- AUTUMN / FALL ---
   {
-    id: "apple",
+    id: "db:apple",
     name: "Apple",
     latinName: "Malus domestica (incl. wildings)",
     category: "berries",
@@ -451,7 +451,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [8, 9, 10, 11], // August through November
   },
   {
-    id: "rose-hips",
+    id: "db:rose-hips",
     name: "Rose (Hips)",
     latinName: "Rosa canina (typical)",
     category: "berries",
@@ -475,7 +475,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [9, 10, 11], // September through November
   },
   {
-    id: "hawthorn",
+    id: "db:hawthorn",
     name: "Hawthorn",
     latinName: "Crataegus monogyna",
     category: "berries",
@@ -498,7 +498,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [9, 10, 11], // September through November
   },
   {
-    id: "raspberry",
+    id: "db:raspberry",
     name: "Raspberry",
     latinName: "Rubus idaeus",
     category: "berries",
@@ -521,7 +521,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [6, 7, 8, 9], // June through September
   },
   {
-    id: "beech",
+    id: "db:beech",
     name: "Beech",
     latinName: "Fagus sylvatica",
     category: "nuts",
@@ -545,7 +545,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [9, 10], // September, October
   },
   {
-    id: "cep",
+    id: "db:cep",
     name: "Cep / Porcini",
     latinName: "Boletus edulis",
     category: "mushrooms",
@@ -569,7 +569,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [8, 9, 10, 11], // August through November
   },
   {
-    id: "hazelnut",
+    id: "db:hazelnut",
     name: "Hazelnut",
     latinName: "Corylus avellana",
     category: "nuts",
@@ -592,7 +592,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [9, 10], // September, October
   },
   {
-    id: "sweet-chestnut",
+    id: "db:sweet-chestnut",
     name: "Sweet Chestnut",
     latinName: "Castanea sativa",
     category: "nuts",
@@ -615,7 +615,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [9, 10, 11], // September through November
   },
   {
-    id: "staghorn-sumac",
+    id: "db:staghorn-sumac",
     name: "Staghorn Sumac",
     latinName: "Rhus typhina",
     category: "berries",
@@ -641,7 +641,7 @@ export const PLANTS: PlantDatabase[] = [
 
   // --- WINTER ---
   {
-    id: "wood-sorrel",
+    id: "db:wood-sorrel",
     name: "Wood Sorrel",
     latinName: "Oxalis acetosella",
     category: "leaves",
@@ -665,7 +665,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [3, 4, 5, 6, 7, 8, 9], // March through September, available most of year
   },
   {
-    id: "sea-beet",
+    id: "db:sea-beet",
     name: "Sea Beet",
     latinName: "Beta vulgaris subsp. maritima",
     category: "leaves",
@@ -689,7 +689,7 @@ export const PLANTS: PlantDatabase[] = [
     bestMonths: [5, 6, 7, 8, 9, 10], // May through October
   },
   {
-    id: "birch",
+    id: "db:birch",
     name: "Birch",
     latinName: "Betula pendula",
     category: "leaves",

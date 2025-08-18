@@ -16,7 +16,7 @@ const OfflineBanner: React.FC<OfflineBannerProps> = ({
 }) => {
   if (!isVisible) return null;
 
-  const formatLastOnline = (time: Date | null) => {
+  const formatLastOnline = (time: Date | null | undefined) => {
     if (!time) return 'Never';
     
     const now = new Date();

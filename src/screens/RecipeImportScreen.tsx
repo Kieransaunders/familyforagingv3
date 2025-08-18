@@ -33,7 +33,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
   const [duplicateConflicts, setDuplicateConflicts] = useState<DuplicateConflict[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   
-  const { recipes, bulkAddRecipes, updateRecipe } = useForagingStore();
+  const { getAllRecipes, bulkAddUserRecipes, updateRecipe } = useForagingStore();
 
   const handlePickFile = async () => {
     try {
@@ -53,7 +53,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
         // Check for duplicates
         const conflicts: DuplicateConflict[] = [];
         parsed.recipes.forEach(newRecipe => {
-          const { isDuplicate, existingRecipe } = validateRecipeForDuplicates(newRecipe, recipes);
+          const { isDuplicate, existingRecipe } = validateRecipeForDuplicates(newRecipe, getAllRecipes());
           if (isDuplicate && existingRecipe) {
             conflicts.push({
               newRecipe,
@@ -133,7 +133,7 @@ export default function RecipeImportScreen({ navigation }: RecipeImportScreenPro
 
       // Perform bulk operations
       if (recipesToAdd.length > 0) {
-        bulkAddRecipes(recipesToAdd);
+        bulkAddUserRecipes(recipesToAdd);
       }
       
       recipesToUpdate.forEach(recipe => {

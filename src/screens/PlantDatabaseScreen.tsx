@@ -17,7 +17,7 @@ export default function PlantDatabaseScreen({ navigation }: PlantDatabaseScreenP
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // 0-11
   const [inSeasonNow, setInSeasonNow] = useState<boolean>(false);
   
-  const { plants } = useForagingStore();
+  const { getAllPlants } = useForagingStore();
 
   const handleCategoryPress = (category: PlantCategory) => {
     navigation.navigate('PlantCategory', { category });
@@ -30,7 +30,7 @@ export default function PlantDatabaseScreen({ navigation }: PlantDatabaseScreenP
     }
   };
 
-  const searchResults = searchQuery.length > 0 ? plants.filter(plant => 
+  const searchResults = searchQuery.length > 0 ? getAllPlants().filter(plant => 
     plant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     plant.latinName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     plant.identification.keyFeatures.some(feature => 
@@ -41,7 +41,7 @@ export default function PlantDatabaseScreen({ navigation }: PlantDatabaseScreenP
   const monthKeys = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
   const nowMonth = new Date().getMonth();
   const effectiveMonth = inSeasonNow ? nowMonth : selectedMonth;
-  const inSeasonPlants = effectiveMonth == null ? [] : plants.filter(p => {
+  const inSeasonPlants = effectiveMonth == null ? [] : getAllPlants().filter(p => {
     const flags = p.inSeason;
     if (!flags) return false;
     const key = monthKeys[effectiveMonth];
@@ -127,6 +127,44 @@ export default function PlantDatabaseScreen({ navigation }: PlantDatabaseScreenP
                   </Text>
                 </Pressable>
               </View>
+
+              {/* Developer Tools (Only in DEV mode) */}
+              {__DEV__ && (
+                <View className="border-t border-gray-200 pt-3">
+                  <Text className="text-xs text-gray-500 mb-2">Developer Tools</Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => {
+                        const { seedPlantsFromCode, getAllPlants } = useForagingStore.getState();
+                        seedPlantsFromCode();
+                        const count = getAllPlants().filter(p => p.id.startsWith('db:')).length;
+                        alert(`✅ Built-in plants refreshed (${count} plants loaded)`);
+                      }}
+                      className="flex-1 bg-purple-500 rounded-lg px-3 py-2 flex-row items-center justify-center"
+                    >
+                      <Ionicons name="refresh-circle" size={16} color="white" />
+                      <Text className="text-white text-xs font-semibold ml-1">
+                        Seed Plants
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        const { getAllPlants } = useForagingStore.getState();
+                        const allPlants = getAllPlants();
+                        const builtIn = allPlants.filter(p => p.id.startsWith('db:')).length;
+                        const user = allPlants.filter(p => p.id.startsWith('usr:')).length;
+                        alert(`📊 Plants: ${builtIn} built-in, ${user} user-created`);
+                      }}
+                      className="flex-1 bg-gray-500 rounded-lg px-3 py-2 flex-row items-center justify-center"
+                    >
+                      <Ionicons name="stats-chart" size={16} color="white" />
+                      <Text className="text-white text-xs font-semibold ml-1">
+                        Stats
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
             </View>
           )}
 

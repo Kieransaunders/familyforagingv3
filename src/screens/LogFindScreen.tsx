@@ -411,7 +411,7 @@ export default function LogFindScreen({ navigation, route }: LogFindScreenProps)
                 <Pressable
                   key={month.key}
                   onPress={() => {
-                    setHarvestMonths(prev => ({
+                    setHarvestMonths((prev: any) => ({
                       ...prev,
                       [month.key]: !prev[month.key]
                     }));

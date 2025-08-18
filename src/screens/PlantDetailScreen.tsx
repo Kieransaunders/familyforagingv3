@@ -12,8 +12,8 @@ interface PlantDetailScreenProps {
 
 export default function PlantDetailScreen({ navigation, route }: PlantDetailScreenProps) {
   const { plantId } = route.params;
-  const { plants, deletePlant } = useForagingStore();
-  const plant = useMemo(() => plants.find(p => p.id === plantId), [plants, plantId]);
+  const { getAllPlants, deletePlant } = useForagingStore();
+  const plant = useMemo(() => getAllPlants().find(p => p.id === plantId), [getAllPlants, plantId]);
   const [expandedSections, setExpandedSections] = useState<string[]>(['identification']);
 
 
@@ -53,23 +53,41 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Plant',
-      `Are you sure you want to delete ${plant.name}? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            deletePlant(plant.id);
-            Alert.alert('Success', 'Plant deleted successfully', [
-              { text: 'OK', onPress: () => navigation.goBack() }
-            ]);
+    if (plant.id.startsWith('db:')) {
+      Alert.alert(
+        'Cannot Delete Built-in Plant',
+        'This is a built-in plant that cannot be deleted. Would you like to create a custom copy that you can edit?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Create Copy', 
+            onPress: () => {
+              navigation.navigate('PlantCreate', { 
+                editPlant: { ...plant, id: `usr:${plant.name.toLowerCase().replace(/\s+/g, '-')}-copy` }
+              });
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Delete Plant',
+        `Are you sure you want to delete ${plant.name}? This action cannot be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete', 
+            style: 'destructive',
+            onPress: () => {
+              deletePlant(plant.id);
+              Alert.alert('Success', 'Plant deleted successfully', [
+                { text: 'OK', onPress: () => navigation.goBack() }
+              ]);
+            }
+          }
+        ]
+      );
+    }
   };
 
   const getCategoryColor = (category: string) => {
@@ -154,7 +172,20 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
               padding: 24
             }}
           >
-            <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>{plant.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>{plant.name}</Text>
+              {plant.id.startsWith('db:') && (
+                <View style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)', 
+                  paddingHorizontal: 6, 
+                  paddingVertical: 2, 
+                  borderRadius: 4, 
+                  marginLeft: 8 
+                }}>
+                  <Text style={{ color: 'white', fontSize: 10, fontWeight: '600' }}>BUILT-IN</Text>
+                </View>
+              )}
+            </View>
             <Text style={{ color: 'white', fontSize: 18, fontStyle: 'italic' }}>{plant.latinName}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
               <View 
@@ -219,7 +250,27 @@ export default function PlantDetailScreen({ navigation, route }: PlantDetailScre
           </Pressable>
 
           <Pressable
-            onPress={() => navigation.navigate('PlantCreate', { editPlant: plant })}
+            onPress={() => {
+              if (plant.id.startsWith('db:')) {
+                Alert.alert(
+                  'Copy Built-in Plant',
+                  'This is a built-in plant. You can create a custom copy to edit.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Create Copy', 
+                      onPress: () => {
+                        navigation.navigate('PlantCreate', { 
+                          editPlant: { ...plant, id: `usr:${plant.name.toLowerCase().replace(/\s+/g, '-')}-copy` }
+                        });
+                      }
+                    }
+                  ]
+                );
+              } else {
+                navigation.navigate('PlantCreate', { editPlant: plant });
+              }
+            }}
             className="w-12 bg-blue-500 rounded-xl items-center justify-center"
           >
             <Ionicons name="create" size={20} color="white" />

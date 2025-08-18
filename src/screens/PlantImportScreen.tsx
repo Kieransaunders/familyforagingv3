@@ -33,7 +33,7 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
   const [duplicateConflicts, setDuplicateConflicts] = useState<DuplicateConflict[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   
-  const { plants, bulkAddPlants, updatePlant } = useForagingStore();
+  const { getAllPlants, bulkAddUserPlants, updatePlant } = useForagingStore();
 
   const handlePickFile = async () => {
     try {
@@ -53,7 +53,7 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
         // Check for duplicates
         const conflicts: DuplicateConflict[] = [];
         parsed.plants.forEach(newPlant => {
-          const { isDuplicate, existingPlant } = validatePlantForDuplicates(newPlant, plants);
+          const { isDuplicate, existingPlant } = validatePlantForDuplicates(newPlant, getAllPlants());
           if (isDuplicate && existingPlant) {
             conflicts.push({
               newPlant,
@@ -133,7 +133,7 @@ export default function PlantImportScreen({ navigation }: PlantImportScreenProps
 
       // Perform bulk operations
       if (plantsToAdd.length > 0) {
-        bulkAddPlants(plantsToAdd);
+        bulkAddUserPlants(plantsToAdd);
       }
       
       plantsToUpdate.forEach(plant => {

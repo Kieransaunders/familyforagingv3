@@ -15,7 +15,7 @@ interface FindDetailScreenProps {
 
 export default function FindDetailScreen({ navigation, route }: FindDetailScreenProps) {
   const { find }: { find: ForagingFind } = route.params;
-  const { deleteFind, recipes } = useForagingStore();
+  const { deleteFind, getAllRecipes } = useForagingStore();
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showFullNotes, setShowFullNotes] = useState(false);
   const screenWidth = Dimensions.get('window').width;
@@ -41,7 +41,7 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
     }
   };
 
-  const relatedRecipes = recipes.filter(recipe =>
+  const relatedRecipes = getAllRecipes().filter(recipe =>
     recipe.requiredFinds.some(ingredient =>
       ingredient.toLowerCase().includes(find.name.toLowerCase()) ||
       find.name.toLowerCase().includes(ingredient.toLowerCase())

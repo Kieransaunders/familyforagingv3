@@ -39,7 +39,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     currentLocation,
     setCurrentLocation,
     setPresetLogLocation,
-    plants,
+    getAllPlants,
     focusedFind,
     setFocusedFind,
     addFind,
@@ -138,7 +138,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
     if (mapFilter.category.length > 0 && !mapFilter.category.includes(find.category)) return false;
 
     if (mapFilter.inSeasonNow) {
-      const matchedPlant = plants.find(p => p.name.toLowerCase().trim() === find.name.toLowerCase().trim());
+      const matchedPlant = getAllPlants().find(p => p.name.toLowerCase().trim() === find.name.toLowerCase().trim());
       if (!matchedPlant) return false;
       const flags = matchedPlant.inSeason;
       if (!flags) return false;
@@ -550,7 +550,7 @@ export default function MapScreen({ navigation }: MapScreenProps) {
                 In Season Now
               </Text>
               <ScrollView className="max-h-64">
-                {plants.filter(p => {
+                {getAllPlants().filter(p => {
                   const flags = p.inSeason;
                   if (!flags) return false;
                   const key = monthKeys[monthIndex];

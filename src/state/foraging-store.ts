@@ -12,21 +12,51 @@ interface ForagingState {
   updateFind: (id: string, updates: Partial<ForagingFind>) => void;
   deleteFind: (id: string) => void;
   
-  // Recipes
-  recipes: Recipe[];
-  addRecipe: (recipe: Recipe) => void;
-  updateRecipe: (id: string, updates: Partial<Recipe>) => void;
-  bulkAddRecipes: (recipes: Recipe[]) => void;
-  deleteRecipe: (id: string) => void;
-  favoriteRecipes: string[];
-  toggleFavoriteRecipe: (id: string) => void;
+  // Built-in content (not persisted - loaded from code)
+  builtInPlants: Plant[];
+  builtInRecipes: Recipe[];
   
-  // Plants
+  // User content (persisted)
+  userPlants: Plant[];
+  userRecipes: Recipe[];
+
+  // Legacy combined views (non-persisted) for compatibility
   plants: Plant[];
+  recipes: Recipe[];
+  
+  // Derived selectors
+  getAllPlants: () => Plant[];
+  getAllRecipes: () => Recipe[];
+  
+  // Seeding actions
+  seedPlantsFromCode: () => void;
+  seedRecipesFromCode: () => void;
+  
+  // User plant actions
+  addUserPlant: (plant: Plant) => void;
+  updateUserPlant: (id: string, updates: Partial<Plant>) => void;
+  deleteUserPlant: (id: string) => void;
+  bulkAddUserPlants: (plants: Plant[]) => void;
+  
+  // User recipe actions
+  addUserRecipe: (recipe: Recipe) => void;
+  updateUserRecipe: (id: string, updates: Partial<Recipe>) => void;
+  deleteUserRecipe: (id: string) => void;
+  bulkAddUserRecipes: (recipes: Recipe[]) => void;
+  
+  // Legacy actions (for compatibility)
   addPlant: (plant: Plant) => void;
   updatePlant: (id: string, updates: Partial<Plant>) => void;
   bulkAddPlants: (plants: Plant[]) => void;
   deletePlant: (id: string) => void;
+  addRecipe: (recipe: Recipe) => void;
+  updateRecipe: (id: string, updates: Partial<Recipe>) => void;
+  bulkAddRecipes: (recipes: Recipe[]) => void;
+  deleteRecipe: (id: string) => void;
+  
+  // Favorites
+  favoriteRecipes: string[];
+  toggleFavoriteRecipe: (id: string) => void;
   favoritePlants: string[];
   toggleFavoritePlant: (id: string) => void;
   
@@ -72,7 +102,7 @@ interface ForagingState {
   lastOnlineTimestamp: Date | null;
   setLastOnlineTimestamp: (timestamp: Date) => void;
   
-  // Plant loading state
+  // Legacy plant loading
   loadPlantDatabase: () => void;
 }
 
@@ -121,45 +151,171 @@ export const useForagingStore = create<ForagingState>()(
           finds: state.finds.filter((find) => find.id !== id),
         })),
       
-      // Recipes
-      recipes: getDefaultRecipes(),
-      addRecipe: (recipe) => set((state) => ({ recipes: [...state.recipes, recipe] })),
-      updateRecipe: (id, updates) =>
+      // Built-in content (not persisted)
+      builtInPlants: [],
+      builtInRecipes: [],
+      
+      // User content (persisted)
+      userPlants: [],
+      userRecipes: [],
+
+      // Legacy combined views
+      plants: [],
+      recipes: [],
+      
+      // Derived selectors
+      getAllPlants: () => {
+        const state = get();
+        return [...state.builtInPlants, ...state.userPlants];
+      },
+      getAllRecipes: () => {
+        const state = get();
+        return [...state.builtInRecipes, ...state.userRecipes];
+      },
+      
+      // Seeding actions
+      seedPlantsFromCode: () => {
+        const defaultPlants = withInSeasonDefaults(getPlantsFromDatabase()).map(p => ({
+          ...p,
+          id: p.id.startsWith('db:') ? p.id : `db:${p.id}`,
+        }));
         set((state) => ({
-          recipes: state.recipes.map((recipe) =>
+          builtInPlants: defaultPlants,
+          plants: [...defaultPlants, ...state.userPlants],
+        }));
+      },
+      seedRecipesFromCode: () => {
+        const defaultRecipes = getDefaultRecipes().map(r => ({
+          ...r,
+          id: r.id.startsWith('db:') ? r.id : `db:${r.id}`,
+        }));
+        set((state) => ({
+          builtInRecipes: defaultRecipes,
+          recipes: [...defaultRecipes, ...state.userRecipes],
+        }));
+      },
+      
+      // User plant actions
+      addUserPlant: (plant) => set((state) => {
+        const newPlant = ensureInSeason({ ...plant, id: plant.id.startsWith('usr:') ? plant.id : `usr:${plant.id}` });
+        const userPlants = [...state.userPlants, newPlant];
+        return {
+          userPlants,
+          plants: [...state.builtInPlants, ...userPlants],
+        };
+      }),
+      updateUserPlant: (id, updates) =>
+        set((state) => {
+          const userPlants = state.userPlants.map((plant) =>
+            plant.id === id ? { ...plant, ...ensureInSeason({ ...plant, ...updates }) } : plant
+          );
+          return {
+            userPlants,
+            plants: [...state.builtInPlants, ...userPlants],
+          };
+        }),
+      deleteUserPlant: (id) =>
+        set((state) => {
+          const userPlants = state.userPlants.filter((plant) => plant.id !== id);
+          return {
+            userPlants,
+            plants: [...state.builtInPlants, ...userPlants],
+            favoritePlants: state.favoritePlants.filter((fid) => fid !== id),
+          };
+        }),
+      bulkAddUserPlants: (newPlants) => 
+        set((state) => {
+          const added = newPlants.map(p => ensureInSeason({ ...p, id: p.id.startsWith('usr:') ? p.id : `usr:${p.id}` }));
+          const userPlants = [...state.userPlants, ...added];
+          return {
+            userPlants,
+            plants: [...state.builtInPlants, ...userPlants],
+          };
+        }),
+      
+      // User recipe actions
+      addUserRecipe: (recipe) => set((state) => {
+        const newRecipe = { ...recipe, id: recipe.id.startsWith('usr:') ? recipe.id : `usr:${recipe.id}` };
+        const userRecipes = [...state.userRecipes, newRecipe];
+        return {
+          userRecipes,
+          recipes: [...state.builtInRecipes, ...userRecipes],
+        };
+      }),
+      updateUserRecipe: (id, updates) =>
+        set((state) => {
+          const userRecipes = state.userRecipes.map((recipe) =>
             recipe.id === id ? { ...recipe, ...updates } : recipe
-          ),
-        })),
-      bulkAddRecipes: (newRecipes) => 
-        set((state) => ({ recipes: [...state.recipes, ...newRecipes] })),
-      deleteRecipe: (id) =>
-        set((state) => ({
-          recipes: state.recipes.filter((recipe) => recipe.id !== id),
-          favoriteRecipes: state.favoriteRecipes.filter((fid) => fid !== id),
-        })),
+          );
+          return {
+            userRecipes,
+            recipes: [...state.builtInRecipes, ...userRecipes],
+          };
+        }),
+      deleteUserRecipe: (id) =>
+        set((state) => {
+          const userRecipes = state.userRecipes.filter((recipe) => recipe.id !== id);
+          return {
+            userRecipes,
+            recipes: [...state.builtInRecipes, ...userRecipes],
+            favoriteRecipes: state.favoriteRecipes.filter((fid) => fid !== id),
+          };
+        }),
+      bulkAddUserRecipes: (newRecipes) => 
+        set((state) => {
+          const added = newRecipes.map(r => ({ ...r, id: r.id.startsWith('usr:') ? r.id : `usr:${r.id}` }));
+          const userRecipes = [...state.userRecipes, ...added];
+          return {
+            userRecipes,
+            recipes: [...state.builtInRecipes, ...userRecipes],
+          };
+        }),
+      
+      // Legacy actions (for compatibility - delegate to user actions)
+      addPlant: (plant) => get().addUserPlant(plant),
+      updatePlant: (id, updates) => {
+        const state = get();
+        if (id.startsWith('db:')) {
+          console.warn('Attempting to edit built-in plant. Consider copy-on-edit pattern.');
+          return;
+        }
+        state.updateUserPlant(id, updates);
+      },
+      bulkAddPlants: (plants) => get().bulkAddUserPlants(plants),
+      deletePlant: (id) => {
+        const state = get();
+        if (id.startsWith('db:')) {
+          console.warn('Cannot delete built-in plant.');
+          return;
+        }
+        state.deleteUserPlant(id);
+      },
+      addRecipe: (recipe) => get().addUserRecipe(recipe),
+      updateRecipe: (id, updates) => {
+        const state = get();
+        if (id.startsWith('db:')) {
+          console.warn('Attempting to edit built-in recipe. Consider copy-on-edit pattern.');
+          return;
+        }
+        state.updateUserRecipe(id, updates);
+      },
+      bulkAddRecipes: (recipes) => get().bulkAddUserRecipes(recipes),
+      deleteRecipe: (id) => {
+        const state = get();
+        if (id.startsWith('db:')) {
+          console.warn('Cannot delete built-in recipe.');
+          return;
+        }
+        state.deleteUserRecipe(id);
+      },
+      
+      // Favorites
       favoriteRecipes: [],
       toggleFavoriteRecipe: (id) =>
         set((state) => ({
           favoriteRecipes: state.favoriteRecipes.includes(id)
             ? state.favoriteRecipes.filter((fid) => fid !== id)
             : [...state.favoriteRecipes, id],
-        })),
-      
-      // Plants
-      plants: [], // Start empty, load async after initial render
-      addPlant: (plant) => set((state) => ({ plants: [...state.plants, ensureInSeason(plant)] })),
-      updatePlant: (id, updates) =>
-        set((state) => ({
-          plants: state.plants.map((plant) =>
-            plant.id === id ? { ...plant, ...ensureInSeason({ ...plant, ...updates }) } : plant
-          ),
-        })),
-      bulkAddPlants: (newPlants) => 
-        set((state) => ({ plants: [...state.plants, ...newPlants.map(ensureInSeason)] })),
-      deletePlant: (id) =>
-        set((state) => ({
-          plants: state.plants.filter((plant) => plant.id !== id),
-          favoritePlants: state.favoritePlants.filter((fid) => fid !== id),
         })),
       favoritePlants: [],
       toggleFavoritePlant: (id) =>
@@ -212,35 +368,92 @@ export const useForagingStore = create<ForagingState>()(
       lastOnlineTimestamp: null,
       setLastOnlineTimestamp: (timestamp) => set({ lastOnlineTimestamp: timestamp }),
       
-      // Plant loading
+      // Legacy plant loading (now just delegates to seeding)
       loadPlantDatabase: () => {
-        // Load plants asynchronously after initial render
-        setTimeout(() => {
-          const defaultPlants = withInSeasonDefaults(getPlantsFromDatabase());
-          set((state) => {
-            // Only load default plants if we don't have any custom plants
-            // Merge with existing plants, avoiding duplicates by ID
-            const existingIds = new Set(state.plants.map(p => p.id));
-            const newPlants = defaultPlants.filter(p => !existingIds.has(p.id));
-            return { plants: [...state.plants, ...newPlants] };
-          });
-        }, 100);
+        const state = get();
+        state.seedPlantsFromCode();
       },
     }),
     {
       name: 'foraging-store',
-      version: 2, // Increment to force cache invalidation and load new plant database
+      version: 4, // Bumped for seed content separation migration
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         finds: state.finds,
         favoriteRecipes: state.favoriteRecipes,
-        plants: state.plants,
         favoritePlants: state.favoritePlants,
         mapFilter: state.mapFilter,
         showHeatZones: state.showHeatZones,
         lastMapRegion: state.lastMapRegion,
         lastOnlineTimestamp: state.lastOnlineTimestamp,
+        // Only persist user content, not built-in content
+        userPlants: state.userPlants,
+        userRecipes: state.userRecipes,
       }),
+      migrate: (persistedState: any, version: number) => {
+        console.log('Migrating foraging store from version', version, 'to version 4');
+        
+        if (version < 4) {
+          // Migration from legacy structure (plants/recipes arrays) to new structure
+          const legacyPlants = persistedState.plants || [];
+          const legacyRecipes = persistedState.recipes || [];
+          
+          // Get seed IDs to identify what should be built-in vs user content
+          const seedPlantRawIds = getPlantsFromDatabase().map(p => p.id.replace(/^db:/, ''));
+          const seedPlantIds = new Set([
+            ...seedPlantRawIds,
+            ...seedPlantRawIds.map(id => `db:${id}`),
+          ]);
+          const seedPlantIdMap = new Map<string, string>();
+          seedPlantRawIds.forEach(id => {
+            seedPlantIdMap.set(id, `db:${id}`);
+            seedPlantIdMap.set(`db:${id}`, `db:${id}`);
+          });
+          const seedRecipeRawIds = getDefaultRecipes().map(r => r.id.replace(/^db:/, ''));
+          const seedRecipeIds = new Set([
+            ...seedRecipeRawIds,
+            ...seedRecipeRawIds.map(id => `db:${id}`),
+          ]);
+          const seedRecipeIdMap = new Map<string, string>();
+          seedRecipeRawIds.forEach(id => {
+            seedRecipeIdMap.set(id, `db:${id}`);
+            seedRecipeIdMap.set(`db:${id}`, `db:${id}`);
+          });
+          
+          // Separate user-created content from seed content
+          const userPlants = legacyPlants.filter((plant: Plant) => !seedPlantIds.has(plant.id));
+          const userRecipes = legacyRecipes.filter((recipe: Recipe) => !seedRecipeIds.has(recipe.id));
+          
+          // Migrate favorites to prefixed IDs where applicable
+          const favoritePlants = (persistedState.favoritePlants || []).map((fid: string) => seedPlantIdMap.get(fid) || fid);
+          const favoriteRecipes = (persistedState.favoriteRecipes || []).map((fid: string) => seedRecipeIdMap.get(fid) || fid);
+
+          console.log(`Migration: ${userPlants.length} user plants, ${userRecipes.length} user recipes preserved`);
+          
+          return {
+            ...persistedState,
+            userPlants,
+            userRecipes,
+            favoritePlants,
+            favoriteRecipes,
+            // Remove legacy fields
+            plants: undefined,
+            recipes: undefined,
+          };
+        }
+        
+        return persistedState;
+      },
+      onRehydrateStorage: () => {
+        return (state) => {
+          if (state) {
+            // Always load built-in content from code on rehydration
+            console.log('Seeding built-in content from code');
+            state.seedPlantsFromCode();
+            state.seedRecipesFromCode();
+          }
+        };
+      },
     }
   )
 );
@@ -248,7 +461,7 @@ export const useForagingStore = create<ForagingState>()(
 function getDefaultRecipes(): Recipe[] {
   return [
     {
-      id: '1',
+      id: 'db:elderflower-cordial',
       title: 'Elderflower Cordial',
       description: 'A refreshing summer drink made from elderflower heads',
       ingredients: ['20 elderflower heads', '1.5kg sugar', '2 lemons', '1.5L boiling water'],
@@ -269,7 +482,7 @@ function getDefaultRecipes(): Recipe[] {
       tags: ['summer', 'refreshing', 'traditional'],
     },
     {
-      id: '2',
+      id: 'db:wild-garlic-pesto',
       title: 'Wild Garlic Pesto',
       description: 'A pungent and flavorful pesto using wild garlic leaves',
       ingredients: ['100g wild garlic leaves', '50g pine nuts', '50g parmesan', '100ml olive oil'],
@@ -289,7 +502,7 @@ function getDefaultRecipes(): Recipe[] {
       tags: ['spring', 'garlic', 'preserve'],
     },
     {
-      id: '3',
+      id: 'db:nettle-soup',
       title: 'Nettle Soup',
       description: 'A nutritious spring soup using young nettle leaves',
       ingredients: ['200g young nettle leaves', '1 onion', '2 potatoes', '500ml vegetable stock'],
@@ -311,7 +524,7 @@ function getDefaultRecipes(): Recipe[] {
       tags: ['spring', 'nutritious', 'soup'],
     },
     {
-      id: '4',
+      id: 'db:blackberry-jam',
       title: 'Blackberry Jam',
       description: 'Traditional jam made from wild blackberries',
       ingredients: ['1kg blackberries', '800g sugar', '1 lemon'],
@@ -332,7 +545,7 @@ function getDefaultRecipes(): Recipe[] {
       tags: ['autumn', 'preserve', 'traditional'],
     },
     {
-      id: '5',
+      id: 'db:dandelion-tea',
       title: 'Dandelion Tea',
       description: 'A detoxifying herbal tea from dandelion leaves',
       ingredients: ['2 tbsp fresh dandelion leaves', '1 cup boiling water', 'honey to taste'],
