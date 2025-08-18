@@ -1,6 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
+import { useForagingStore } from "./src/state/foraging-store";
+import { useEffect } from "react";
 import 'react-native-gesture-handler';
 
 /*
@@ -25,6 +27,13 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 */
 
 export default function App() {
+  const loadPlantDatabase = useForagingStore((state) => state.loadPlantDatabase);
+  
+  useEffect(() => {
+    // Load plant database asynchronously after app renders
+    loadPlantDatabase();
+  }, [loadPlantDatabase]);
+
   return (
     <SafeAreaProvider>
       <AppNavigator />

@@ -14,7 +14,22 @@ interface LogFindScreenProps {
 }
 
 export default function LogFindScreen({ navigation, route }: LogFindScreenProps) {
-  const editFind = route?.params?.editFind;
+  const { finds } = useForagingStore();
+  const editFindId = route?.params?.editFindId;
+  const editFindParam = route?.params?.editFind;
+  
+  // Get editFind either from ID or from params (with dateFound conversion)
+  const editFind = editFindId 
+    ? finds.find(f => f.id === editFindId)
+    : editFindParam
+    ? {
+        ...editFindParam,
+        dateFound: typeof editFindParam.dateFound === 'string' 
+          ? new Date(editFindParam.dateFound) 
+          : editFindParam.dateFound
+      }
+    : null;
+    
   const isEditMode = !!editFind;
   
   const [name, setName] = useState(editFind?.name || '');

@@ -261,8 +261,8 @@ export default function MapScreen({ navigation }: MapScreenProps) {
       setShowQuickFindSheet(false);
       setPendingPin(null);
       
-      // Navigate to the edit screen for the newly created find
-      navigation.navigate('LogFind', { editFind: newFind });
+      // Navigate to the edit screen for the newly created find (pass only ID for serializable params)
+      navigation.navigate('LogFind', { editFindId: findId });
     }
   };
 

@@ -71,6 +71,9 @@ interface ForagingState {
   
   lastOnlineTimestamp: Date | null;
   setLastOnlineTimestamp: (timestamp: Date) => void;
+  
+  // Plant loading state
+  loadPlantDatabase: () => void;
 }
 
 function monthFlagsDefault() {
@@ -143,7 +146,7 @@ export const useForagingStore = create<ForagingState>()(
         })),
       
       // Plants
-      plants: withInSeasonDefaults(getPlantsFromDatabase()),
+      plants: [], // Start empty, load async after initial render
       addPlant: (plant) => set((state) => ({ plants: [...state.plants, ensureInSeason(plant)] })),
       updatePlant: (id, updates) =>
         set((state) => ({
@@ -208,6 +211,15 @@ export const useForagingStore = create<ForagingState>()(
       
       lastOnlineTimestamp: null,
       setLastOnlineTimestamp: (timestamp) => set({ lastOnlineTimestamp: timestamp }),
+      
+      // Plant loading
+      loadPlantDatabase: () => {
+        // Load plants asynchronously after initial render
+        setTimeout(() => {
+          const plants = withInSeasonDefaults(getPlantsFromDatabase());
+          set({ plants });
+        }, 100);
+      },
     }),
     {
       name: 'foraging-store',

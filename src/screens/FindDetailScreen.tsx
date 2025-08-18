@@ -109,7 +109,7 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
             <View className="absolute top-4 right-4 flex-row gap-2">
               
               <Pressable
-                onPress={() => navigation.navigate('LogFind', { editFind: find })}
+                onPress={() => navigation.navigate('LogFind', { editFindId: find.id })}
                 className="bg-blue-500/90 rounded-full p-2"
               >
                 <Ionicons name="pencil" size={20} color="white" />
@@ -136,7 +136,7 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
             <View className="absolute top-4 right-4 flex-row gap-2">
               
               <Pressable
-                onPress={() => navigation.navigate('LogFind', { editFind: find })}
+                onPress={() => navigation.navigate('LogFind', { editFindId: find.id })}
                 className="bg-blue-500/90 rounded-full p-2"
               >
                 <Ionicons name="pencil" size={20} color="white" />
@@ -284,7 +284,7 @@ export default function FindDetailScreen({ navigation, route }: FindDetailScreen
             <View className="mb-6">
               <Text className="text-lg font-bold text-gray-900 mb-3">Notes</Text>
               <Pressable 
-                onPress={() => navigation.navigate('LogFind', { editFind: find })}
+                onPress={() => navigation.navigate('LogFind', { editFindId: find.id })}
                 className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6 items-center"
               >
                 <Ionicons name="add-circle-outline" size={32} color="#9ca3af" />
